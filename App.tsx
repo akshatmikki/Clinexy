@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { MemoryRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
+import ScrollToHash from './components/ScrollToHash';
 import { SolutionsSoloDoctors } from './pages/SolutionsSoloDoctors';
 import { FeaturesDoctorBranding } from './pages/FeaturesDoctorBranding';
 import { FeaturesAppointmentsReminders } from './pages/FeaturesAppointmentsReminders';
@@ -17,6 +18,7 @@ import { CompareSimplePractice } from './pages/CompareSimplePractice';
 import { CompareCliniko } from './pages/CompareCliniko';
 import { PageTemplate } from './pages/PageTemplate';
 import { SITEMAP } from './constants';
+import { BlogDetails } from './pages/BlogDetails';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -30,13 +32,14 @@ const App: React.FC = () => {
   return (
     <Router>
       <ScrollToTop />
+      <ScrollToHash />
       <div className="font-sans text-slate-900 bg-white">
         <Header />
         <main>
           <Routes>
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
-
+            <Route path="/blogs/:slug" element={<BlogDetails />} />
             {/* Specific Page Routes */}
             <Route path="/solutions/solo-doctors" element={<SolutionsSoloDoctors />} />
             <Route path="/features/doctor-branding-growth" element={<FeaturesDoctorBranding />} />
@@ -50,13 +53,13 @@ const App: React.FC = () => {
             <Route path="/compare/clinexy-vs-practo" element={<ComparePracto />} />
             <Route path="/compare/clinexy-vs-simplepractice" element={<CompareSimplePractice />} />
             <Route path="/compare/clinexy-vs-cliniko" element={<CompareCliniko />} />
-            
+
             {/* Dynamic Routes from Sitemap for all other pages */}
             {SITEMAP.map((page) => {
               // Filter out pages that already have explicit components above
               if (
-                page.path === '/' || 
-                page.path === '/solutions/solo-doctors' || 
+                page.path === '/' ||
+                page.path === '/solutions/solo-doctors' ||
                 page.path === '/features/doctor-branding-growth' ||
                 page.path === '/features/appointments-reminders' ||
                 page.path === '/features/teleconsultation-prescriptions' ||
@@ -69,12 +72,12 @@ const App: React.FC = () => {
                 page.path === '/compare/clinexy-vs-simplepractice' ||
                 page.path === '/compare/clinexy-vs-cliniko'
               ) return null;
-              
+
               return (
-                <Route 
-                  key={page.path} 
-                  path={page.path} 
-                  element={<PageTemplate data={page} />} 
+                <Route
+                  key={page.path}
+                  path={page.path}
+                  element={<PageTemplate data={page} />}
                 />
               );
             })}

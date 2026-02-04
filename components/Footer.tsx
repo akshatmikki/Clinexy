@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-6">
               <div className="bg-primary-600 text-white p-1.5 rounded-lg">
@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
               <button className="text-slate-400 hover:text-white transition-colors cursor-pointer"><Facebook className="h-5 w-5" /></button>
             </div>
           </div>
-          
+
           <div>
             <h3 className="text-white font-semibold mb-4">Features</h3>
             <ul className="space-y-2 text-sm">
@@ -52,8 +52,20 @@ export const Footer: React.FC = () => {
               <li><Link to="/demo" className="hover:text-primary-400 transition-colors">Book a Demo</Link></li>
             </ul>
           </div>
+          <div>
+            <h3 className="text-white font-semibold mb-4">Resources</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  to="/#blogs"
+                  className="hover:text-primary-400 transition-colors"
+                >
+                  Blogs
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
-        
         <div className="pt-8 border-t border-slate-800 text-center text-sm text-slate-500">
           © {new Date().getFullYear()} Clinexy. All rights reserved.
         </div>

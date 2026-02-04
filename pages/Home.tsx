@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  CheckCircle, Calendar, MessageSquare, TrendingUp, Shield, Smartphone, 
-  Video, Globe, Star, Users, ArrowRight, Clock, AlertCircle, XCircle, 
+import {
+  CheckCircle, Calendar, MessageSquare, TrendingUp, Shield, Smartphone,
+  Video, Globe, Star, Users, ArrowRight, Clock, AlertCircle, XCircle,
   Play, FileText, Activity, HeartPulse, Check, Calculator
 } from 'lucide-react';
 import { Button } from '../components/Button';
 
 export const Home: React.FC = () => {
   const [selectedReality, setSelectedReality] = useState<number[]>([]);
-  
+
   // Calculator State
   const [calcFee, setCalcFee] = useState(500);
   const [calcAppts, setCalcAppts] = useState(40);
@@ -128,6 +128,123 @@ export const Home: React.FC = () => {
     }
   ];
 
+  const blogs = [
+    {
+      id: 1,
+      slug: "reducing-no-shows-busy-clinic",
+      title: "Reducing No-Shows in a Busy Clinic",
+      excerpt:
+        "With over a decade of experience, we’ve seen how simple reminder systems drastically reduce missed appointments.",
+      image:
+        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+      date: { day: "24", month: "Jul", year: "2021" },
+      author: "Clinexy Team",
+      category: "Clinic Management",
+      comments: 0,
+      content: `
+It is a long-established fact that missed appointments are one of the biggest silent revenue leaks for solo clinics.
+
+Patients usually don’t skip intentionally. They forget, get busy, or feel awkward calling back.
+
+## Why No-Shows Happen
+- Manual appointment booking
+- No confirmation messages
+- No reminders before visit
+- Patients unsure if appointment is confirmed
+
+## Content Without Backward-Compatible Data
+Clinics that rely only on calls are operating with outdated systems. Modern clinics use **automated confirmations + reminders** to reduce no-shows by up to **40%**.
+
+> “What sort of system allows patients to forget appointments entirely?”
+
+## What Actually Works
+- WhatsApp reminders 24 hours before visit
+- Easy rescheduling links
+- Clear appointment confirmations
+
+Earlier this year, multiple independent clinics reported a visible improvement within the **first 2 weeks** of switching to automated reminders.
+
+Consistency beats follow-ups. Systems beat memory.
+    `
+    },
+
+    {
+      id: 2,
+      slug: "why-every-doctor-needs-their-own-website",
+      title: "Why Every Doctor Needs Their Own Website",
+      excerpt:
+        "Owning your digital presence builds trust, improves recall, and brings repeat patients directly to you.",
+      image:
+        "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=1200&q=80",
+      date: { day: "18", month: "Jul", year: "2021" },
+      author: "Clinexy Team",
+      category: "Doctor Branding",
+      comments: 0,
+      content: `
+Most doctors depend on third-party platforms for visibility — but that comes at a cost.
+
+## The Problem With Platforms
+- High commissions
+- Patients belong to the platform, not you
+- No long-term brand value
+
+Patients remember **your name**, not app listings.
+
+## Your Website = Your Identity
+A personal website builds trust even before a patient walks in.
+
+Benefits include:
+- Direct bookings
+- Google visibility
+- Trust through reviews
+- Full ownership of patient data
+
+> Patients feel more confident booking when they see a real doctor website.
+
+Doctors with personal websites see **higher repeat visits** and stronger recall.
+
+Your website works even when your clinic is closed.
+    `
+    },
+
+    {
+      id: 3,
+      slug: "whatsapp-reminders-patients-actually-read",
+      title: "WhatsApp Reminders Patients Actually Read",
+      excerpt:
+        "Calls are ignored. Messages are read. Here’s why WhatsApp reminders outperform traditional follow-ups.",
+      image:
+        "https://images.unsplash.com/photo-1550831107-1553da8c8464?auto=format&fit=crop&w=1200&q=80",
+      date: { day: "12", month: "Jul", year: "2021" },
+      author: "Clinexy Team",
+      category: "Patient Communication",
+      comments: 0,
+      content: `
+Phone calls are disruptive. Messages are convenient.
+
+## Why Calls Fail
+- Patients don’t pick up unknown numbers
+- Staff spends hours calling
+- No written confirmation for patients
+
+## Why WhatsApp Wins
+- 90%+ open rate
+- Instant delivery
+- Easy rescheduling
+- Written proof of appointment
+
+> A reminder seen is a reminder that works.
+
+Clinics using WhatsApp reminders report:
+- Fewer no-shows
+- Less staff dependency
+- Happier patients
+
+Automation doesn’t remove care — it improves it.
+    `
+    }
+  ];
+
   const scrollToHowItWorks = (e: React.MouseEvent) => {
     e.preventDefault();
     const element = document.getElementById('how-it-works');
@@ -148,8 +265,8 @@ export const Home: React.FC = () => {
                 <span>Your Personal Digital Clinic</span>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight tracking-tight">
-                Manage Appointments. <br/>
-                Reduce No‑Shows. <br/>
+                Manage Appointments. <br />
+                Reduce No‑Shows. <br />
                 <span className="text-primary-600">Grow Your Practice.</span>
               </h1>
               <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-lg">
@@ -168,8 +285,8 @@ export const Home: React.FC = () => {
                 </button>
               </div>
               <div className="border-t border-slate-100 pt-6">
-                 <p className="text-sm text-slate-500 font-medium mb-2">Trusted by independent doctors worldwide</p>
-                 <div className="flex items-center gap-6 text-sm text-slate-400 font-medium">
+                <p className="text-sm text-slate-500 font-medium mb-2">Trusted by independent doctors worldwide</p>
+                <div className="flex items-center gap-6 text-sm text-slate-400 font-medium">
                   <div className="flex items-center gap-1.5">
                     <div className="bg-green-100 p-0.5 rounded-full">
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -185,13 +302,13 @@ export const Home: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Hero Image Mockup */}
             <div className="relative hidden lg:block">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary-100/50 rounded-full blur-3xl -z-10"></div>
-              <img 
-                src="https://images.unsplash.com/photo-1622902046580-2b47f47f5471?auto=format&fit=crop&q=80&w=800" 
-                alt="Doctor using Clinexy on tablet" 
+              <img
+                src="https://images.unsplash.com/photo-1622902046580-2b47f47f5471?auto=format&fit=crop&q=80&w=800"
+                alt="Doctor using Clinexy on tablet"
                 className="relative rounded-2xl shadow-2xl border-4 border-white w-full object-cover transform hover:scale-[1.02] transition-transform duration-500"
               />
               {/* Floating Badge */}
@@ -216,28 +333,25 @@ export const Home: React.FC = () => {
             <h2 className="text-3xl font-bold text-slate-900 mb-4">The Reality Solo Doctors Face Today</h2>
             <p className="text-lg text-slate-600">Select the ones that sound familiar to you:</p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4">
             {painPoints.map((point, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 onClick={() => toggleReality(idx)}
-                className={`p-6 rounded-xl border cursor-pointer transition-all duration-300 group relative flex items-start gap-4 ${
-                  selectedReality.includes(idx) 
-                    ? 'bg-red-50 border-red-200 shadow-md transform scale-[1.01]' 
-                    : 'bg-white border-slate-200 hover:border-red-200 hover:shadow-sm'
-                }`}
+                className={`p-6 rounded-xl border cursor-pointer transition-all duration-300 group relative flex items-start gap-4 ${selectedReality.includes(idx)
+                  ? 'bg-red-50 border-red-200 shadow-md transform scale-[1.01]'
+                  : 'bg-white border-slate-200 hover:border-red-200 hover:shadow-sm'
+                  }`}
               >
-                 <div className={`mt-1 w-6 h-6 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
-                    selectedReality.includes(idx) ? 'bg-red-500 border-red-500' : 'border-slate-300 group-hover:border-red-400 bg-white'
-                 }`}>
-                   {selectedReality.includes(idx) && <Check className="h-4 w-4 text-white" />}
-                 </div>
-                 <p className={`font-medium text-lg leading-snug transition-colors ${
-                    selectedReality.includes(idx) ? 'text-red-900' : 'text-slate-700'
-                 }`}>
-                    {point.text}
-                 </p>
+                <div className={`mt-1 w-6 h-6 rounded-md border flex items-center justify-center transition-colors shrink-0 ${selectedReality.includes(idx) ? 'bg-red-500 border-red-500' : 'border-slate-300 group-hover:border-red-400 bg-white'
+                  }`}>
+                  {selectedReality.includes(idx) && <Check className="h-4 w-4 text-white" />}
+                </div>
+                <p className={`font-medium text-lg leading-snug transition-colors ${selectedReality.includes(idx) ? 'text-red-900' : 'text-slate-700'
+                  }`}>
+                  {point.text}
+                </p>
               </div>
             ))}
           </div>
@@ -294,16 +408,16 @@ export const Home: React.FC = () => {
                   {/* Micro CTA */}
                   <div className="pt-2">
                     <Link to={feature.link} className="inline-flex items-center text-primary-600 font-bold hover:text-primary-700 group transition-colors">
-                       See how this works for solo doctors 
-                       <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
+                      See how this works for solo doctors
+                      <ArrowRight className="h-4 w-4 ml-2 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>
                 </div>
                 <div className="flex-1 relative group w-full">
                   <div className={`absolute inset-0 bg-primary-100 rounded-2xl transform rotate-3 group-hover:rotate-2 transition-transform duration-500 -z-10 ${index % 2 === 1 ? '-rotate-3 group-hover:-rotate-2' : ''}`}></div>
-                  <img 
-                    src={feature.image} 
-                    alt={feature.title} 
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
                     className="rounded-2xl shadow-xl w-full object-cover h-[400px]"
                   />
                 </div>
@@ -317,66 +431,66 @@ export const Home: React.FC = () => {
       <section className="py-24 bg-slate-900 text-white">
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center mb-12">
-             <div className="inline-flex items-center justify-center p-3 bg-red-500/20 rounded-xl mb-4 text-red-400">
-               <Calculator className="h-8 w-8" />
-             </div>
-             <h2 className="text-3xl font-bold mb-4">Are No-Shows Eating Your Profits?</h2>
-             <p className="text-slate-400">See how much revenue you lose annually due to missed appointments—and how Clinexy can help.</p>
+            <div className="inline-flex items-center justify-center p-3 bg-red-500/20 rounded-xl mb-4 text-red-400">
+              <Calculator className="h-8 w-8" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">Are No-Shows Eating Your Profits?</h2>
+            <p className="text-slate-400">See how much revenue you lose annually due to missed appointments—and how Clinexy can help.</p>
           </div>
 
           <div className="bg-slate-800 rounded-3xl p-8 md:p-12 shadow-2xl border border-slate-700">
             <div className="grid md:grid-cols-2 gap-12">
-               <div className="space-y-8">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">Avg Consultation Fee</label>
-                    <div className="relative">
-                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">₹</span>
-                       <input 
-                         type="number" 
-                         value={calcFee}
-                         onChange={(e) => setCalcFee(Number(e.target.value))}
-                         className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-8 pr-4 text-white focus:ring-2 focus:ring-primary-500"
-                       />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                       Weekly Appointments: <span className="text-primary-400 font-bold">{calcAppts}</span>
-                    </label>
-                    <input 
-                       type="range" min="5" max="200"
-                       value={calcAppts}
-                       onChange={(e) => setCalcAppts(Number(e.target.value))}
-                       className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+              <div className="space-y-8">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Avg Consultation Fee</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">₹</span>
+                    <input
+                      type="number"
+                      value={calcFee}
+                      onChange={(e) => setCalcFee(Number(e.target.value))}
+                      className="w-full bg-slate-900 border border-slate-600 rounded-lg py-3 pl-8 pr-4 text-white focus:ring-2 focus:ring-primary-500"
                     />
                   </div>
-                  <div>
-                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                        No-Show Rate: <span className="text-red-400 font-bold">{calcNoShow}%</span>
-                     </label>
-                     <input 
-                        type="range" min="0" max="50"
-                        value={calcNoShow}
-                        onChange={(e) => setCalcNoShow(Number(e.target.value))}
-                        className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-red-500"
-                     />
-                  </div>
-               </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Weekly Appointments: <span className="text-primary-400 font-bold">{calcAppts}</span>
+                  </label>
+                  <input
+                    type="range" min="5" max="200"
+                    value={calcAppts}
+                    onChange={(e) => setCalcAppts(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    No-Show Rate: <span className="text-red-400 font-bold">{calcNoShow}%</span>
+                  </label>
+                  <input
+                    type="range" min="0" max="50"
+                    value={calcNoShow}
+                    onChange={(e) => setCalcNoShow(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-red-500"
+                  />
+                </div>
+              </div>
 
-               <div className="flex flex-col justify-center space-y-6">
-                  <div className="bg-red-900/30 rounded-2xl p-6 border border-red-500/30 text-center">
-                     <div className="text-sm text-red-200 uppercase tracking-wider font-semibold mb-1">Yearly Revenue Lost</div>
-                     <div className="text-4xl font-bold text-red-400">₹{calcLostYearly.toLocaleString()}</div>
-                     <p className="text-xs text-red-300 mt-2">Money left on the table</p>
-                  </div>
-                  <div className="bg-secondary-600 rounded-2xl p-6 text-center shadow-lg transform scale-105">
-                     <div className="text-sm text-secondary-100 uppercase tracking-wider font-semibold mb-1">Clinexy Cost / Year</div>
-                     <div className="text-3xl font-bold text-white">₹11,988</div>
-                     <p className="text-xs text-secondary-100 mt-2">
-                        Clinexy pays for itself by saving just <span className="font-bold underline">one missed appointment</span> a month.
-                     </p>
-                  </div>
-               </div>
+              <div className="flex flex-col justify-center space-y-6">
+                <div className="bg-red-900/30 rounded-2xl p-6 border border-red-500/30 text-center">
+                  <div className="text-sm text-red-200 uppercase tracking-wider font-semibold mb-1">Yearly Revenue Lost</div>
+                  <div className="text-4xl font-bold text-red-400">₹{calcLostYearly.toLocaleString()}</div>
+                  <p className="text-xs text-red-300 mt-2">Money left on the table</p>
+                </div>
+                <div className="bg-secondary-600 rounded-2xl p-6 text-center shadow-lg transform scale-105">
+                  <div className="text-sm text-secondary-100 uppercase tracking-wider font-semibold mb-1">Clinexy Cost / Year</div>
+                  <div className="text-3xl font-bold text-white">₹11,988</div>
+                  <p className="text-xs text-secondary-100 mt-2">
+                    Clinexy pays for itself by saving just <span className="font-bold underline">one missed appointment</span> a month.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -474,7 +588,7 @@ export const Home: React.FC = () => {
           <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 hover:border-primary-300 transition-all duration-300 transform hover:-translate-y-1 relative">
             {/* Best Value Badge */}
             <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-10">BEST VALUE</div>
-            
+
             <div className="p-8 bg-slate-900 text-white text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                 <Activity className="h-32 w-32" />
@@ -489,10 +603,10 @@ export const Home: React.FC = () => {
                 <span className="text-3xl font-bold text-slate-300">$99</span>
                 <span className="text-slate-500">/ month (Global)</span>
               </div>
-              
+
               {/* Cost Anchor */}
               <div className="mt-4 pt-4 border-t border-slate-800 text-green-400 text-sm font-semibold">
-                 Costs less than one missed appointment per month
+                Costs less than one missed appointment per month
               </div>
             </div>
             <div className="p-8">
@@ -522,6 +636,75 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* Blogs Section */}
+      <section id="blogs" className="py-24 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[60%] h-full bg-slate-50 rotate-[-6deg] translate-x-1/4 -z-10" />
+
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-slate-900">
+              Our <span className="text-primary-600">Blogs</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-10">
+            {blogs.map((blog) => (
+              <div
+                key={blog.id}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+              >
+                {/* Image */}
+                <div className="relative h-56 overflow-hidden">
+                  <img
+                    src={blog.image}
+                    alt={blog.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+
+                  {/* Date Badge */}
+                  <div className="absolute top-4 left-4 bg-primary-600 text-white rounded-lg px-3 py-2 text-center text-sm font-bold leading-tight shadow-lg">
+                    <div className="text-xl">{blog.date.day}</div>
+                    <div className="uppercase text-xs">{blog.date.month}</div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  {/* Meta */}
+                  <div className="flex items-center gap-6 text-sm text-slate-500 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary-500" />
+                      {blog.author}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-primary-500" />
+                      {blog.comments} Comment
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-bold text-primary-600 mb-3 leading-snug">
+                    {blog.title}
+                  </h3>
+
+                  {/* Excerpt */}
+                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                    {blog.excerpt}
+                  </p>
+
+                  {/* CTA */}
+                  <Link
+                    to={`/blogs/${blog.slug}`} className="inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors">
+                    View More
+                    <span className="text-lg">+</span>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Target Audience & Final CTA */}
       <section className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
@@ -542,14 +725,14 @@ export const Home: React.FC = () => {
           <div className="bg-primary-600 rounded-3xl p-12 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full transform -translate-x-1/2 translate-y-1/2"></div>
-            
+
             <h2 className="text-3xl md:text-4xl font-bold mb-6 relative z-10">Get Started Today</h2>
             <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto relative z-10">
               Your clinic doesn’t need more staff or more software. It needs a <span className="font-bold text-white">smarter system</span>.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
               <a href="https://rishabhkumar.clinexy.com/signup">
-                <Button size="lg" className="bg-white text-primary-700 hover:bg-slate-100 w-full sm:w-auto px-8">
+                <Button size="lg" className="bg-white text-primary-800 hover:bg-slate-100 w-full sm:w-auto px-8">
                   Start Your Free Trial
                 </Button>
               </a>
