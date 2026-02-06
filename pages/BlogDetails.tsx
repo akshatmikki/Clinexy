@@ -73,7 +73,7 @@ export const BlogDetails = () => {
               {blogs.slice(0, 2).map((b) => (
                 <Link
                   key={b.id}
-                  to={`/blog/${b.slug}`}
+                  to={`/blogs/${b.slug}`}
                   className="block mb-3 hover:text-primary-600"
                 >
                   {b.title}
