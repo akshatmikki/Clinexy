@@ -19,6 +19,9 @@ import { CompareCliniko } from './pages/CompareCliniko';
 import { PageTemplate } from './pages/PageTemplate';
 import { SITEMAP } from './constants';
 import { BlogDetails } from './pages/BlogDetails';
+import CreateBlog from "./pages/CreateBlog";
+import Blogs from "./pages/Blogs";
+
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -39,7 +42,9 @@ const App: React.FC = () => {
           <Routes>
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
+            <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
+            <Route path="/create-blog" element={<CreateBlog />} />
             {/* Specific Page Routes */}
             <Route path="/solutions/solo-doctors" element={<SolutionsSoloDoctors />} />
             <Route path="/features/doctor-branding-growth" element={<FeaturesDoctorBranding />} />
@@ -53,6 +58,7 @@ const App: React.FC = () => {
             <Route path="/compare/clinexy-vs-practo" element={<ComparePracto />} />
             <Route path="/compare/clinexy-vs-simplepractice" element={<CompareSimplePractice />} />
             <Route path="/compare/clinexy-vs-cliniko" element={<CompareCliniko />} />
+
 
             {/* Dynamic Routes from Sitemap for all other pages */}
             {SITEMAP.map((page) => {

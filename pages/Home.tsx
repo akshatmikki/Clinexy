@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CheckCircle, Calendar, MessageSquare, TrendingUp, Shield, Smartphone,
@@ -128,122 +128,49 @@ export const Home: React.FC = () => {
     }
   ];
 
-  const blogs = [
-    {
-      id: 1,
-      slug: "reducing-no-shows-busy-clinic",
-      title: "Reducing No-Shows in a Busy Clinic",
-      excerpt:
-        "With over a decade of experience, we’ve seen how simple reminder systems drastically reduce missed appointments.",
-      image:
-        "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
-      date: { day: "24", month: "Jul", year: "2021" },
-      author: "Clinexy Team",
-      category: "Clinic Management",
-      comments: 0,
-      content: `
-It is a long-established fact that missed appointments are one of the biggest silent revenue leaks for solo clinics.
+ interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  featuredImage: string;
+  authorName: string;
+  tags: string[];
+  views: number;
+  likes: number;
+  createdAt?: string;
+}
 
-Patients usually don’t skip intentionally. They forget, get busy, or feel awkward calling back.
+const [blogs, setBlogs] = useState<Blog[]>([]);
+const [loadingBlogs, setLoadingBlogs] = useState(true);
 
-## Why No-Shows Happen
-- Manual appointment booking
-- No confirmation messages
-- No reminders before visit
-- Patients unsure if appointment is confirmed
+useEffect(() => {
+  const fetchBlogs = async () => {
+    try {
+      const res = await fetch("https://admin.urest.in:8089/api/blogs");
+      if (!res.ok) return;
 
-## Content Without Backward-Compatible Data
-Clinics that rely only on calls are operating with outdated systems. Modern clinics use **automated confirmations + reminders** to reduce no-shows by up to **40%**.
-
-> “What sort of system allows patients to forget appointments entirely?”
-
-## What Actually Works
-- WhatsApp reminders 24 hours before visit
-- Easy rescheduling links
-- Clear appointment confirmations
-
-Earlier this year, multiple independent clinics reported a visible improvement within the **first 2 weeks** of switching to automated reminders.
-
-Consistency beats follow-ups. Systems beat memory.
-    `
-    },
-
-    {
-      id: 2,
-      slug: "why-every-doctor-needs-their-own-website",
-      title: "Why Every Doctor Needs Their Own Website",
-      excerpt:
-        "Owning your digital presence builds trust, improves recall, and brings repeat patients directly to you.",
-      image:
-        "https://images.unsplash.com/photo-1526256262350-7da7584cf5eb?auto=format&fit=crop&w=1200&q=80",
-      date: { day: "18", month: "Jul", year: "2021" },
-      author: "Clinexy Team",
-      category: "Doctor Branding",
-      comments: 0,
-      content: `
-Most doctors depend on third-party platforms for visibility — but that comes at a cost.
-
-## The Problem With Platforms
-- High commissions
-- Patients belong to the platform, not you
-- No long-term brand value
-
-Patients remember **your name**, not app listings.
-
-## Your Website = Your Identity
-A personal website builds trust even before a patient walks in.
-
-Benefits include:
-- Direct bookings
-- Google visibility
-- Trust through reviews
-- Full ownership of patient data
-
-> Patients feel more confident booking when they see a real doctor website.
-
-Doctors with personal websites see **higher repeat visits** and stronger recall.
-
-Your website works even when your clinic is closed.
-    `
-    },
-
-    {
-      id: 3,
-      slug: "whatsapp-reminders-patients-actually-read",
-      title: "WhatsApp Reminders Patients Actually Read",
-      excerpt:
-        "Calls are ignored. Messages are read. Here’s why WhatsApp reminders outperform traditional follow-ups.",
-      image:
-        "https://images.unsplash.com/photo-1550831107-1553da8c8464?auto=format&fit=crop&w=1200&q=80",
-      date: { day: "12", month: "Jul", year: "2021" },
-      author: "Clinexy Team",
-      category: "Patient Communication",
-      comments: 0,
-      content: `
-Phone calls are disruptive. Messages are convenient.
-
-## Why Calls Fail
-- Patients don’t pick up unknown numbers
-- Staff spends hours calling
-- No written confirmation for patients
-
-## Why WhatsApp Wins
-- 90%+ open rate
-- Instant delivery
-- Easy rescheduling
-- Written proof of appointment
-
-> A reminder seen is a reminder that works.
-
-Clinics using WhatsApp reminders report:
-- Fewer no-shows
-- Less staff dependency
-- Happier patients
-
-Automation doesn’t remove care — it improves it.
-    `
+      const data: Blog[] = await res.json();
+      setBlogs(data);
+    } catch (err) {
+      console.error("Failed to fetch blogs");
+    } finally {
+      setLoadingBlogs(false);
     }
-  ];
+  };
+
+  fetchBlogs();
+}, []);
+
+const getExcerpt = (content: string, length = 140) => {
+  try {
+    const decoded = JSON.parse(content);
+    return decoded.replace(/[#>*\-]/g, "").slice(0, length) + "...";
+  } catch {
+    return content.slice(0, length) + "...";
+  }
+};
+
 
   const scrollToHowItWorks = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -648,60 +575,66 @@ Automation doesn’t remove care — it improves it.
           </div>
 
           <div className="grid md:grid-cols-3 gap-10">
-            {blogs.map((blog) => (
-              <div
-                key={blog.id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group"
-              >
-                {/* Image */}
-                <div className="relative h-56 overflow-hidden">
-                  <img
-                    src={blog.image}
-                    alt={blog.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+  {loadingBlogs ? (
+    <p className="text-slate-500">Loading blogs...</p>
+  ) : blogs.length === 0 ? (
+    <p className="text-slate-500">No blogs found.</p>
+  ) : (
+    blogs.map((blog) => (
+      <div
+        key={blog.id}
+        className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+      >
+        {/* Image */}
+        <div className="relative h-56 overflow-hidden">
+          <img
+            src={
+              blog.featuredImage ||
+              "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80"
+            }
+            alt={blog.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
 
-                  {/* Date Badge */}
-                  <div className="absolute top-4 left-4 bg-primary-600 text-white rounded-lg px-3 py-2 text-center text-sm font-bold leading-tight shadow-lg">
-                    <div className="text-xl">{blog.date.day}</div>
-                    <div className="uppercase text-xs">{blog.date.month}</div>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  {/* Meta */}
-                  <div className="flex items-center gap-6 text-sm text-slate-500 mb-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary-500" />
-                      {blog.author}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-primary-500" />
-                      {blog.comments} Comment
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl font-bold text-primary-600 mb-3 leading-snug">
-                    {blog.title}
-                  </h3>
-
-                  {/* Excerpt */}
-                  <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                    {blog.excerpt}
-                  </p>
-
-                  {/* CTA */}
-                  <Link
-                    to={`/blogs/${blog.slug}`} className="inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors">
-                    View More
-                    <span className="text-lg">+</span>
-                  </Link>
-                </div>
-              </div>
-            ))}
+        {/* Content */}
+        <div className="p-6">
+          {/* Meta */}
+          <div className="flex items-center gap-6 text-sm text-slate-500 mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary-500" />
+              {blog.authorName || "Clinexy Team"}
+            </div>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-primary-500" />
+              {blog.views} Views
+            </div>
           </div>
+
+          {/* Title */}
+          <h3 className="text-xl font-bold text-primary-600 mb-3 leading-snug">
+            {blog.title}
+          </h3>
+
+          {/* Excerpt */}
+          <p className="text-slate-600 text-sm leading-relaxed mb-6">
+            {getExcerpt(blog.content)}
+          </p>
+
+          {/* CTA */}
+          <Link
+            to={`/blogs/${blog.slug}`}
+            className="inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors"
+          >
+            View More
+            <span className="text-lg">+</span>
+          </Link>
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
         </div>
       </section>
 
