@@ -211,8 +211,6 @@ export const BlogDetails = () => {
   const normalizedMarkdownContent = markdownContent
     // Avoid accidental thematic breaks (---, ***, ___) turning into horizontal lines.
     .replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, "")
-    // Treat single line breaks as visible breaks without forcing extra blank lines.
-    .replace(/([^\n])\n(?=[^\n])/g, "$1  \n")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[^*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/gm, "$1<em>$2</em>");
   return (
@@ -298,7 +296,6 @@ export const BlogDetails = () => {
     prose-blockquote:py-4
     prose-blockquote:italic
   "
-              style={{ whiteSpace: "pre-line" }}
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -342,6 +339,8 @@ export const BlogDetails = () => {
                         {...spanProps}
                         style={{
                           ...(spanProps.style || {}),
+                          verticalAlign: "baseline",
+                          ...(spanProps.style?.fontSize ? { lineHeight: 1.5 } : {}),
                         }}
                       />
                     );

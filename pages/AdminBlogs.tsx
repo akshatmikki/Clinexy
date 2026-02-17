@@ -478,35 +478,16 @@ const AdminBlogs = () => {
     });
   };
 
-  const unwrapStyleSpan = (value: string, styleKey: "font-size" | "font-family") => {
-    let next = value;
-    const styleSpanPattern = new RegExp(
-      `<span\\s+style="[^"]*${styleKey}\\s*:[^"]*"\\s*>([\\s\\S]*?)<\\/span>`,
-      "gi"
-    );
-
-    let previous = "";
-    while (previous !== next) {
-      previous = next;
-      next = next.replace(styleSpanPattern, "$1");
-    }
-
-    return next;
-  };
-
   const applyFontFamily = (fontFamily: string) => {
     setTextFontFamily(fontFamily);
     wrapSelectionPerLine((line) => {
       const markerMatch = line.match(/^(\s*(?:[-*+]\s+|\d+\.\s+))(.*)$/);
       if (markerMatch) {
         const marker = markerMatch[1];
-        const content = unwrapStyleSpan(markerMatch[2], "font-family");
+        const content = markerMatch[2];
         return `${marker}<span style="font-family:${fontFamily};">${content}</span>`;
       }
-      return `<span style="font-family:${fontFamily};">${unwrapStyleSpan(
-        line,
-        "font-family"
-      )}</span>`;
+      return `<span style="font-family:${fontFamily};">${line}</span>`;
     });
   };
 
@@ -516,13 +497,10 @@ const AdminBlogs = () => {
       const markerMatch = line.match(/^(\s*(?:[-*+]\s+|\d+\.\s+))(.*)$/);
       if (markerMatch) {
         const marker = markerMatch[1];
-        const content = unwrapStyleSpan(markerMatch[2], "font-size");
+        const content = markerMatch[2];
         return `${marker}<span style="font-size:${fontSize}px;">${content}</span>`;
       }
-      return `<span style="font-size:${fontSize}px;">${unwrapStyleSpan(
-        line,
-        "font-size"
-      )}</span>`;
+      return `<span style="font-size:${fontSize}px;">${line}</span>`;
     });
   };
 
