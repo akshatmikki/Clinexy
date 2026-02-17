@@ -303,6 +303,8 @@ useEffect(() => {
 
 const getExcerpt = (content: unknown, length = 140) => {
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ");
+  const stripMarkdownDecorators = (value: string) => value.replace(/[#*\-`]/g, "");
+  const sanitizeText = (value: string) => stripMarkdownDecorators(stripHtml(value));
   const trimWithEllipsis = (value: string) => {
     const normalized = value.replace(/\s+/g, " ").trim();
     if (!normalized) return "";
@@ -352,13 +354,13 @@ const getExcerpt = (content: unknown, length = 140) => {
     const decoded = JSON.parse(contentText);
     const decodedText = pickText(decoded);
     if (decodedText) {
-      return trimWithEllipsis(stripHtml(decodedText.replace(/[#>*\-`]/g, "")));
+      return trimWithEllipsis(sanitizeText(decodedText));
     }
   } catch {
     // Fallback to raw content when value is not JSON encoded.
   }
 
-  return trimWithEllipsis(stripHtml(contentText.replace(/[#>*\-`]/g, "")));
+  return trimWithEllipsis(sanitizeText(contentText));
 };
 
   const scrollToHowItWorks = (e: React.MouseEvent) => {
@@ -816,7 +818,7 @@ const getExcerpt = (content: unknown, length = 140) => {
                           overflow: "hidden",
                         }}
                       >
-                        {getExcerpt(blog.content || blog.excerpt, 240) || blog.excerpt || "Read this article to learn more."}
+                        {getExcerpt(blog.content || blog.excerpt, 240) || getExcerpt(blog.excerpt, 240) || "Read this article to learn more."}
                       </p>
 
                       {/* CTA */}

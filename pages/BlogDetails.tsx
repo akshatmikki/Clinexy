@@ -209,6 +209,10 @@ export const BlogDetails = () => {
 
   const markdownContent = decodeContent(blog.content);
   const normalizedMarkdownContent = markdownContent
+    // Avoid accidental thematic breaks (---, ***, ___) turning into horizontal lines.
+    .replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, "")
+    // Treat single line breaks as visible breaks without forcing extra blank lines.
+    .replace(/([^\n])\n(?=[^\n])/g, "$1  \n")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[^*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/gm, "$1<em>$2</em>");
   return (
@@ -274,8 +278,8 @@ export const BlogDetails = () => {
               className="
     prose prose-slate max-w-none
 
-    prose-p:leading-relaxed
-    prose-p:my-6
+    prose-p:leading-7
+    prose-p:my-3
 
     prose-h2:text-2xl
     prose-h2:font-bold
@@ -294,6 +298,7 @@ export const BlogDetails = () => {
     prose-blockquote:py-4
     prose-blockquote:italic
   "
+              style={{ whiteSpace: "pre-line" }}
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -324,7 +329,19 @@ export const BlogDetails = () => {
                         {...pProps}
                         style={{
                           ...(pProps.style || {}),
+                          whiteSpace: "pre-wrap",
                           ...(align ? { textAlign: align } : {}),
+                        }}
+                      />
+                    );
+                  },
+                  span: ({ node, ...props }) => {
+                    const spanProps = props as React.HTMLAttributes<HTMLSpanElement>;
+                    return (
+                      <span
+                        {...spanProps}
+                        style={{
+                          ...(spanProps.style || {}),
                         }}
                       />
                     );
@@ -334,6 +351,12 @@ export const BlogDetails = () => {
                   ),
                   ol: ({ node, ...props }) => (
                     <ol className="list-decimal list-inside pl-0 my-6 space-y-2" {...props} />
+                  ),
+                  hr: ({ node, ...props }) => (
+                    <hr
+                      {...props}
+                      className="my-8 border-0 border-t border-slate-300"
+                    />
                   ),
                 }}
               >

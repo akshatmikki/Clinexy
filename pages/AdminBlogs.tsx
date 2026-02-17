@@ -21,7 +21,7 @@ const API_BASE = "https://admin.urest.in:8089/api/blogs";
 const DEFAULT_BLOG_IMAGE =
   "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80";
 const FONT_OPTIONS = ["Arial", "Candara", "Times New Roman", "Georgia", "Verdana"];
-const FONT_SIZE_OPTIONS = [11, 12, 14, 16, 18, 20];
+const FONT_SIZE_OPTIONS = [11, 12, 14, 16, 18, 20, 21, 22, 24, 26, 28, 30, 32];
 const EMOJIS = ["😀", "😁", "😂", "😊", "😍", "🤔", "🔥", "🚀", "💡", "✅", "📌", "🩺", "❤️", "🎉"];
 
 type RawBlog = {
@@ -478,16 +478,35 @@ const AdminBlogs = () => {
     });
   };
 
+  const unwrapStyleSpan = (value: string, styleKey: "font-size" | "font-family") => {
+    let next = value;
+    const styleSpanPattern = new RegExp(
+      `<span\\s+style="[^"]*${styleKey}\\s*:[^"]*"\\s*>([\\s\\S]*?)<\\/span>`,
+      "gi"
+    );
+
+    let previous = "";
+    while (previous !== next) {
+      previous = next;
+      next = next.replace(styleSpanPattern, "$1");
+    }
+
+    return next;
+  };
+
   const applyFontFamily = (fontFamily: string) => {
     setTextFontFamily(fontFamily);
     wrapSelectionPerLine((line) => {
       const markerMatch = line.match(/^(\s*(?:[-*+]\s+|\d+\.\s+))(.*)$/);
       if (markerMatch) {
         const marker = markerMatch[1];
-        const content = markerMatch[2];
+        const content = unwrapStyleSpan(markerMatch[2], "font-family");
         return `${marker}<span style="font-family:${fontFamily};">${content}</span>`;
       }
-      return `<span style="font-family:${fontFamily};">${line}</span>`;
+      return `<span style="font-family:${fontFamily};">${unwrapStyleSpan(
+        line,
+        "font-family"
+      )}</span>`;
     });
   };
 
@@ -497,10 +516,13 @@ const AdminBlogs = () => {
       const markerMatch = line.match(/^(\s*(?:[-*+]\s+|\d+\.\s+))(.*)$/);
       if (markerMatch) {
         const marker = markerMatch[1];
-        const content = markerMatch[2];
+        const content = unwrapStyleSpan(markerMatch[2], "font-size");
         return `${marker}<span style="font-size:${fontSize}px;">${content}</span>`;
       }
-      return `<span style="font-size:${fontSize}px;">${line}</span>`;
+      return `<span style="font-size:${fontSize}px;">${unwrapStyleSpan(
+        line,
+        "font-size"
+      )}</span>`;
     });
   };
 
