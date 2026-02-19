@@ -1,9 +1,66 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+const DEFAULT_BLOG_IMAGE =
+  "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80";
+
+type BlogCard = {
+  id: string;
+  slug: string;
+  title: string;
+  featuredImage: string;
+  authorName: string;
+  tags: string[];
+};
+
 const Blogs = () => {
-  const [blogs, setBlogs] = useState([]);
+  const [blogs, setBlogs] = useState<BlogCard[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const normalizeBlog = (item: unknown, index: number): BlogCard => {
+    const raw = (item ?? {}) as {
+      id?: unknown;
+      Id?: unknown;
+      slug?: unknown;
+      Slug?: unknown;
+      title?: unknown;
+      Title?: unknown;
+      featuredImage?: unknown;
+      FeaturedImage?: unknown;
+      authorName?: unknown;
+      AuthorName?: unknown;
+      tags?: unknown;
+      Tags?: unknown;
+    };
+
+    const title =
+      (typeof raw.title === "string" && raw.title.trim()) ||
+      (typeof raw.Title === "string" && raw.Title.trim()) ||
+      "Untitled";
+    const slug =
+      (typeof raw.slug === "string" && raw.slug.trim()) ||
+      (typeof raw.Slug === "string" && raw.Slug.trim()) ||
+      title.toLowerCase().replace(/\s+/g, "-");
+
+    return {
+      id: String(raw.id ?? raw.Id ?? index),
+      slug,
+      title,
+      featuredImage:
+        (typeof raw.featuredImage === "string" && raw.featuredImage.trim()) ||
+        (typeof raw.FeaturedImage === "string" && raw.FeaturedImage.trim()) ||
+        DEFAULT_BLOG_IMAGE,
+      authorName:
+        (typeof raw.authorName === "string" && raw.authorName.trim()) ||
+        (typeof raw.AuthorName === "string" && raw.AuthorName.trim()) ||
+        "Clinexy Team",
+      tags: Array.isArray(raw.tags)
+        ? raw.tags.map(String).filter(Boolean)
+        : Array.isArray(raw.Tags)
+          ? raw.Tags.map(String).filter(Boolean)
+          : [],
+    };
+  };
 
   useEffect(() => {
     fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs")
@@ -16,9 +73,9 @@ const Blogs = () => {
             : Array.isArray(data?.content)
               ? data.content
               : Array.isArray(data?.data)
-                ? data.data
+            ? data.data
                 : [];
-        setBlogs(list);
+        setBlogs(list.map((item, index) => normalizeBlog(item, index)));
         setLoading(false);
       })
       .catch(() => setLoading(false));

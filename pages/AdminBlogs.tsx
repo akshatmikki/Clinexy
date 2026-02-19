@@ -44,6 +44,8 @@ type RawBlog = {
   Status?: unknown;
   createdAt?: unknown;
   CreatedAt?: unknown;
+  sections?: unknown;
+  Sections?: unknown;
 };
 
 type BlogRecord = {
@@ -51,6 +53,7 @@ type BlogRecord = {
   title: string;
   slug: string;
   content: string;
+  sections: ContentSection[];
   featuredImage: string;
   authorName: string;
   tags: string[];
@@ -162,6 +165,83 @@ const parseSectionsFromContent = (content: string): ContentSection[] => {
   return sections.length > 0 ? sections : [emptyContentSection()];
 };
 
+const parseStructuredSectionsFromContent = (value: unknown): ContentSection[] => {
+  const sections = extractSectionsFromUnknown(value);
+  return sections.filter((section) => section.image || section.text);
+};
+
+const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[] => {
+  if (depth > 8 || value == null) return [];
+
+  if (typeof value === "string") {
+    const normalized = value.trim();
+    if (!normalized) return [];
+    try {
+      return extractSectionsFromUnknown(JSON.parse(normalized), depth + 1);
+    } catch {
+      return [];
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => extractSectionsFromUnknown(item, depth + 1));
+  }
+
+  if (typeof value !== "object") return [];
+
+  const obj = value as {
+    sections?: unknown;
+    Sections?: unknown;
+    imageUrl?: unknown;
+    ImageUrl?: unknown;
+    image?: unknown;
+    Image?: unknown;
+    text?: unknown;
+    Text?: unknown;
+    content?: unknown;
+    Content?: unknown;
+    body?: unknown;
+    Body?: unknown;
+    value?: unknown;
+    Value?: unknown;
+  };
+
+  if (obj.sections != null || obj.Sections != null) {
+    return extractSectionsFromUnknown(obj.sections ?? obj.Sections, depth + 1);
+  }
+
+  const image =
+    (typeof obj.imageUrl === "string" && obj.imageUrl.trim()) ||
+    (typeof obj.ImageUrl === "string" && obj.ImageUrl.trim()) ||
+    (typeof obj.image === "string" && obj.image.trim()) ||
+    (typeof obj.Image === "string" && obj.Image.trim()) ||
+    "";
+  const rawText =
+    obj.text ??
+    obj.Text ??
+    obj.content ??
+    obj.Content ??
+    obj.body ??
+    obj.Body ??
+    obj.value ??
+    obj.Value;
+  const text = typeof rawText === "string" ? rawText.trim() : "";
+
+  const nestedFromText = text ? extractSectionsFromUnknown(text, depth + 1) : [];
+  if (nestedFromText.length > 0) return nestedFromText;
+
+  if (!image && !text) return [];
+
+  return [
+    {
+      id: crypto.randomUUID(),
+      image,
+      text,
+      imageFile: null,
+    },
+  ];
+};
+
 const toSlug = (value: string) =>
   value
     .toLowerCase()
@@ -230,12 +310,21 @@ const decodeContent = (contentValue: unknown): string => {
 
   if (!contentValue) return "";
   if (typeof contentValue !== "string") {
+    const structuredSections = parseStructuredSectionsFromContent(contentValue);
+    if (structuredSections.length > 0) {
+      return buildContentFromSections(structuredSections);
+    }
     return readObjectText(contentValue) || "";
   }
 
   try {
     const parsed = JSON.parse(contentValue);
     if (typeof parsed === "string") return parsed;
+
+    const structuredSections = parseStructuredSectionsFromContent(parsed);
+    if (structuredSections.length > 0) {
+      return buildContentFromSections(structuredSections);
+    }
 
     const parsedContent = readObjectText(parsed);
     if (parsedContent) return parsedContent;
@@ -259,12 +348,29 @@ const normalizeBlog = (item: unknown, index: number): BlogRecord => {
     `blog-${index + 1}`;
 
   const contentRaw = raw.content ?? raw.Content ?? "";
+  const rawSections = raw.sections ?? raw.Sections;
+  const sections: ContentSection[] = parseStructuredSectionsFromContent(rawSections);
+  const sectionsFromContentRaw = parseStructuredSectionsFromContent(contentRaw);
+  const decodedContent = decodeContent(contentRaw);
+  const fallbackSectionsFromContent = decodedContent.trim()
+    ? parseSectionsFromContent(decodedContent)
+    : [];
+  const normalizedSections =
+    sections.length > 0
+      ? sections
+      : sectionsFromContentRaw.length > 0
+        ? sectionsFromContentRaw
+        : fallbackSectionsFromContent.filter((s) => s.image || s.text);
+  const content =
+    decodedContent.trim() ||
+    (normalizedSections.length > 0 ? buildContentFromSections(normalizedSections) : "");
 
   return {
     id: String(raw.id ?? raw.Id ?? index),
     title,
     slug,
-    content: decodeContent(contentRaw),
+    content,
+    sections: normalizedSections,
     featuredImage:
       (typeof raw.featuredImage === "string" && raw.featuredImage) ||
       (typeof raw.FeaturedImage === "string" && raw.FeaturedImage) ||
@@ -415,7 +521,10 @@ const AdminBlogs = () => {
       }
 
       setMode("edit");
-      setDraftWithSections(toDraft(selectedWithContent || selected));
+      setDraftWithSections(
+        toDraft(selectedWithContent || selected),
+        (selectedWithContent || selected).sections
+      );
       setPreviewImage((selectedWithContent || selected).featuredImage);
       setImageFile(null);
     } catch (fetchError) {
@@ -446,7 +555,7 @@ const AdminBlogs = () => {
 
   const handleSelectBlog = async (blog: BlogRecord) => {
     setMode("edit");
-    setDraftWithSections(toDraft(blog));
+    setDraftWithSections(toDraft(blog), blog.sections);
     setPreviewImage(blog.featuredImage);
     setImageFile(null);
     setError("");
@@ -455,7 +564,7 @@ const AdminBlogs = () => {
       setLoadingDetail(true);
       const detailed = await fetchBlogDetail(blog.slug, blog);
       if (detailed) {
-        setDraftWithSections(toDraft(detailed));
+        setDraftWithSections(toDraft(detailed), detailed.sections);
         setPreviewImage(detailed.featuredImage);
         setBlogs((prev) =>
           prev.map((item) => (item.slug === detailed.slug ? detailed : item))
@@ -473,8 +582,25 @@ const AdminBlogs = () => {
     setError("");
   };
 
-  const setDraftWithSections = (nextDraft: BlogDraft) => {
+  const setDraftWithSections = (nextDraft: BlogDraft, sectionsOverride?: ContentSection[]) => {
     setDraft(nextDraft);
+    if (sectionsOverride && sectionsOverride.length > 0) {
+      setContentSections(
+        sectionsOverride.map((section) => ({
+          ...section,
+          id: section.id || crypto.randomUUID(),
+          imageFile: null,
+        }))
+      );
+      setEditorMode("sections");
+      return;
+    }
+    const parsedSections = parseStructuredSectionsFromContent(nextDraft.content);
+    if (parsedSections.length > 0) {
+      setContentSections(parsedSections);
+      setEditorMode("sections");
+      return;
+    }
     setContentSections(parseSectionsFromContent(nextDraft.content));
   };
 
@@ -529,8 +655,30 @@ const AdminBlogs = () => {
     updateSections((previous) => [...previous, emptyContentSection()]);
   };
 
+  const handleInsertSectionAfter = (sectionId: string) => {
+    updateSections((previous) => {
+      const index = previous.findIndex((section) => section.id === sectionId);
+      if (index === -1) return [...previous, emptyContentSection()];
+      return [
+        ...previous.slice(0, index + 1),
+        emptyContentSection(),
+        ...previous.slice(index + 1),
+      ];
+    });
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    updateSections((previous) => {
+      const filtered = previous.filter((section) => section.id !== sectionId);
+      return filtered.length > 0 ? filtered : [emptyContentSection()];
+    });
+  };
+
   const switchToSectionsMode = () => {
-    setContentSections(parseSectionsFromContent(draft.content));
+    const parsedSections = parseStructuredSectionsFromContent(draft.content);
+    setContentSections(
+      parsedSections.length > 0 ? parsedSections : parseSectionsFromContent(draft.content)
+    );
     setEditorMode("sections");
   };
 
@@ -827,7 +975,7 @@ const AdminBlogs = () => {
     const tags = getTagList();
     const authorName = draft.authorName.trim() || "Clinexy Team";
     const status = draft.status || "Published";
-    const featuredImage = previewImage || draft.featuredImage || DEFAULT_BLOG_IMAGE;
+    const featuredImage = (previewImage || draft.featuredImage || DEFAULT_BLOG_IMAGE).trim();
     const bodyMarkdown =
       editorMode === "sections"
         ? buildContentFromSections(contentSections).trim()
@@ -848,8 +996,45 @@ const AdminBlogs = () => {
       tags,
       status,
       featuredImage,
+      FeaturedImage: featuredImage,
       sections,
       content: bodyMarkdown,
+    };
+  };
+
+  const buildUpdateBlogPayload = async (resolvedSlug: string, blogId: string) => {
+    const tags = getTagList();
+    const authorName = draft.authorName.trim() || "Clinexy Team";
+    const status = draft.status || "Published";
+    const bodyMarkdown =
+      editorMode === "sections"
+        ? buildContentFromSections(contentSections).trim()
+        : draft.content.trim();
+    const extractedSections = parseSectionsFromContent(bodyMarkdown);
+    const sections = extractedSections
+      .map((section, index) => ({
+        imageUrl: section.image.trim(),
+        heading: `Section ${index + 1}`,
+        text: section.text.trim(),
+      }))
+      .filter((section) => section.imageUrl || section.text);
+    const featuredImageFromSectionZero = sections[0]?.imageUrl?.trim() || "";
+    const featuredImage =
+      (previewImage || draft.featuredImage || "").trim() ||
+      featuredImageFromSectionZero ||
+      DEFAULT_BLOG_IMAGE;
+
+    return {
+      id: blogId,
+      title: draft.title.trim(),
+      slug: resolvedSlug,
+      authorId: null,
+      authorName,
+      tags,
+      status,
+      featuredImage,
+      FeaturedImage: featuredImage,
+      sections,
     };
   };
 
@@ -934,22 +1119,24 @@ const AdminBlogs = () => {
         if (!resolvedIdentifier) {
           throw new Error("Edit failed: blog identifier not found. Re-open the blog and try again.");
         }
-
-        const deleteRes = await fetch(
-          `${API_BASE}/${encodeURIComponent(resolvedIdentifier)}`,
-          { method: "DELETE" }
-        );
-
-        if (!deleteRes.ok) {
-          throw new Error(await parseApiError(deleteRes));
+        const isUuid =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+            resolvedIdentifier
+          );
+        if (!isUuid) {
+          throw new Error("Edit failed: valid blog id not found. Re-open the blog and try again.");
         }
 
-        response = await fetch(`${API_BASE}/CreateStructuredBlog`, {
-          method: "POST",
+        const updatePayload = await buildUpdateBlogPayload(
+          resolvedSlug,
+          resolvedIdentifier
+        );
+        response = await fetch(`${API_BASE}/UpdateBlog/${encodeURIComponent(resolvedIdentifier)}`, {
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(updatePayload),
         });
       }
 
@@ -1036,13 +1223,25 @@ const AdminBlogs = () => {
     if (!file) return;
 
     setImageFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setPreviewImage(result);
-      setDraft((prev) => ({ ...prev, featuredImage: result }));
+    setError("");
+
+    const upload = async () => {
+      try {
+        const imageUrl = await uploadSectionImage(file);
+        setPreviewImage(imageUrl);
+        setDraft((prev) => ({ ...prev, featuredImage: imageUrl }));
+      } catch (uploadError) {
+        const message =
+          uploadError instanceof Error
+            ? uploadError.message
+            : "Failed to upload featured image.";
+        setError(message);
+      } finally {
+        event.target.value = "";
+      }
     };
-    reader.readAsDataURL(file);
+
+    upload();
   };
 
   return (
@@ -1287,6 +1486,22 @@ const AdminBlogs = () => {
                           <div key={section.id} className="rounded-xl border border-slate-200 p-4">
                             <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                               Section {index + 1}
+                            </div>
+                            <div className="mb-3 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleInsertSectionAfter(section.id)}
+                                className="inline-flex items-center rounded-md border border-primary-300 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100"
+                              >
+                                Insert Below
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSection(section.id)}
+                                className="inline-flex items-center rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                              >
+                                Delete Section
+                              </button>
                             </div>
                             <label
                               htmlFor={inputId}
