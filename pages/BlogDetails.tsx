@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Users, MessageSquare, Calendar, Type, Plus, Minus } from "lucide-react";
+import { Users, MessageSquare, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -26,7 +26,7 @@ export const BlogDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [recentBlogs, setRecentBlogs] = useState<Blog[]>([]);
-  const [contentFontSize, setContentFontSize] = useState(18);
+  const [activeImage, setActiveImage] = useState<{ src: string; alt: string } | null>(null);
 
   const normalizeBlog = (item: unknown, index: number): Blog => {
     const raw = (item ?? {}) as {
@@ -145,6 +145,19 @@ export const BlogDetails = () => {
 
     fetchBlog();
   }, [slug]);
+
+  useEffect(() => {
+    if (!activeImage) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveImage(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeImage]);
 
   if (loading) {
     return (
@@ -299,11 +312,25 @@ export const BlogDetails = () => {
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-3 gap-16">
           {/* Main Content */}
           <article className="lg:col-span-2">
-            <img
-              src={featuredImage}
-              alt={blog.title}
-              className="rounded-2xl shadow-lg mb-10 w-full"
-            />
+            <div className="mb-10 overflow-hidden rounded-2xl border border-slate-200 shadow-lg">
+              <div className="h-[300px] w-full md:h-[420px]">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveImage({ src: featuredImage, alt: blog.title || "Featured image" })
+                  }
+                  className="block h-full w-full cursor-zoom-in"
+                  aria-label="View full image"
+                  title="View full image"
+                >
+                  <img
+                    src={featuredImage}
+                    alt={blog.title}
+                    className="h-full w-full object-cover object-center"
+                  />
+                </button>
+              </div>
+            </div>
 
             {/* Meta */}
             <div className="flex flex-wrap gap-6 text-sm text-slate-500 mb-6">
@@ -329,31 +356,6 @@ export const BlogDetails = () => {
             <h2 className="text-3xl font-bold text-slate-900 mb-8">
               {blog.title}
             </h2>
-
-            <div className="mb-6 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <Type className="h-4 w-4 text-slate-600" />
-              <button
-                type="button"
-                onClick={() => setContentFontSize((prev) => Math.max(14, prev - 1))}
-                className="rounded-md border border-slate-300 bg-white p-1 text-slate-700 hover:bg-slate-100"
-                aria-label="Decrease text size"
-                title="Decrease text size"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <span className="w-10 text-center text-sm font-medium text-slate-600">
-                {contentFontSize}px
-              </span>
-              <button
-                type="button"
-                onClick={() => setContentFontSize((prev) => Math.min(28, prev + 1))}
-                className="rounded-md border border-slate-300 bg-white p-1 text-slate-700 hover:bg-slate-100"
-                aria-label="Increase text size"
-                title="Increase text size"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
 
             {/* Blog Content */}
             <div
@@ -381,7 +383,6 @@ export const BlogDetails = () => {
     prose-blockquote:italic
   "
               style={{
-                fontSize: `${contentFontSize}px`,
                 lineHeight: 1.8,
               }}
             >
@@ -431,6 +432,35 @@ export const BlogDetails = () => {
                           ...(spanProps.style?.fontSize ? { lineHeight: 1.5 } : {}),
                         }}
                       />
+                    );
+                  },
+                  img: ({ node, ...props }) => {
+                    const imgProps = props as React.ImgHTMLAttributes<HTMLImageElement>;
+                    if (!imgProps.src) return null;
+                    return (
+                      <figure className="my-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+                        <div className="h-[280px] w-full md:h-[360px]">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveImage({
+                                src: imgProps.src || "",
+                                alt: imgProps.alt || "Blog section image",
+                              })
+                            }
+                            className="block h-full w-full cursor-zoom-in"
+                            aria-label="View full image"
+                            title="View full image"
+                          >
+                            <img
+                              {...imgProps}
+                              alt={imgProps.alt || "Blog section image"}
+                              className="h-full w-full object-cover object-center"
+                              loading="lazy"
+                            />
+                          </button>
+                        </div>
+                      </figure>
                     );
                   },
                   ul: ({ node, ...props }) => (
@@ -514,6 +544,31 @@ export const BlogDetails = () => {
           </aside>
         </div>
       </section>
+
+      {activeImage && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setActiveImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveImage(null)}
+            className="absolute right-4 top-4 rounded-md border border-white/30 bg-black/40 px-3 py-1.5 text-sm text-white hover:bg-black/60"
+          >
+            Close
+          </button>
+          <div
+            className="max-h-[90vh] max-w-[95vw]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <img
+              src={activeImage.src}
+              alt={activeImage.alt}
+              className="max-h-[88vh] max-w-[95vw] rounded-lg object-contain"
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

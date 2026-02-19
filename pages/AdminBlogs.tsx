@@ -11,6 +11,8 @@ import {
   Link as LinkIcon,
   List,
   Loader2,
+  Minus,
+  Plus,
   Save,
   Search,
   Smile,
@@ -427,6 +429,7 @@ const AdminBlogs = () => {
   const [textFontFamily, setTextFontFamily] = useState("Arial");
   const [textFontSize, setTextFontSize] = useState(11);
   const [textAlign, setTextAlign] = useState<"left" | "center" | "right">("left");
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const contentImageInputRef = useRef<HTMLInputElement>(null);
   const lastSelectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
@@ -604,6 +607,23 @@ const AdminBlogs = () => {
     setContentSections(parseSectionsFromContent(nextDraft.content));
   };
 
+  const getEditorContext = () => {
+    const activeSection =
+      editorMode === "sections"
+        ? contentSections.find((section) => section.id === activeSectionId) || null
+        : null;
+    const value = activeSection ? activeSection.text : draft.content;
+    return { activeSection, value };
+  };
+
+  const setEditorContent = (nextValue: string, activeSection: ContentSection | null) => {
+    if (editorMode === "sections" && activeSection) {
+      handleSectionTextChange(activeSection.id, nextValue);
+      return;
+    }
+    setDraft((prev) => ({ ...prev, content: nextValue }));
+  };
+
   const updateSections = (updater: (previous: ContentSection[]) => ContentSection[]) => {
     setContentSections((previous) => {
       const next = updater(previous);
@@ -676,9 +696,10 @@ const AdminBlogs = () => {
 
   const switchToSectionsMode = () => {
     const parsedSections = parseStructuredSectionsFromContent(draft.content);
-    setContentSections(
-      parsedSections.length > 0 ? parsedSections : parseSectionsFromContent(draft.content)
-    );
+    const nextSections =
+      parsedSections.length > 0 ? parsedSections : parseSectionsFromContent(draft.content);
+    setContentSections(nextSections);
+    setActiveSectionId(nextSections[0]?.id || null);
     setEditorMode("sections");
   };
 
@@ -687,6 +708,7 @@ const AdminBlogs = () => {
       ...prev,
       content: buildContentFromSections(contentSections),
     }));
+    setActiveSectionId(null);
     setEditorMode("classic");
   };
 
@@ -694,17 +716,18 @@ const AdminBlogs = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    const start = textarea.selectionStart ?? draft.content.length;
-    const end = textarea.selectionEnd ?? draft.content.length;
-    const selected = draft.content.slice(start, end);
+    const { activeSection, value } = getEditorContext();
+    const start = textarea.selectionStart ?? value.length;
+    const end = textarea.selectionEnd ?? value.length;
+    const selected = value.slice(start, end);
     const nextValue =
-      draft.content.slice(0, start) +
+      value.slice(0, start) +
       before +
       selected +
       after +
-      draft.content.slice(end);
+      value.slice(end);
 
-    setDraft((prev) => ({ ...prev, content: nextValue }));
+    setEditorContent(nextValue, activeSection);
 
     requestAnimationFrame(() => {
       textarea.focus();
@@ -718,9 +741,9 @@ const AdminBlogs = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
+    const { activeSection, value } = getEditorContext();
     const start = textarea.selectionStart ?? 0;
     const end = textarea.selectionEnd ?? 0;
-    const value = draft.content;
     const lineStart = value.lastIndexOf("\n", start - 1) + 1;
     const lineEndIndex = value.indexOf("\n", end);
     const lineEnd = lineEndIndex === -1 ? value.length : lineEndIndex;
@@ -731,7 +754,7 @@ const AdminBlogs = () => {
       .join("\n");
 
     const nextValue = value.slice(0, lineStart) + updatedBlock + value.slice(lineEnd);
-    setDraft((prev) => ({ ...prev, content: nextValue }));
+    setEditorContent(nextValue, activeSection);
 
     requestAnimationFrame(() => {
       textarea.focus();
@@ -757,18 +780,19 @@ const AdminBlogs = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    const currentStart = textarea.selectionStart ?? draft.content.length;
-    const currentEnd = textarea.selectionEnd ?? draft.content.length;
+    const { activeSection, value } = getEditorContext();
+    const currentStart = textarea.selectionStart ?? value.length;
+    const currentEnd = textarea.selectionEnd ?? value.length;
     const hasLiveSelection = currentEnd > currentStart;
     const start = hasLiveSelection ? currentStart : lastSelectionRef.current.start;
     const end = hasLiveSelection ? currentEnd : lastSelectionRef.current.end;
     if (start === end) return;
 
-    const selected = draft.content.slice(start, end);
+    const selected = value.slice(start, end);
     const wrapped = `${prefix}${selected}${suffix}`;
-    const nextValue = draft.content.slice(0, start) + wrapped + draft.content.slice(end);
+    const nextValue = value.slice(0, start) + wrapped + value.slice(end);
 
-    setDraft((prev) => ({ ...prev, content: nextValue }));
+    setEditorContent(nextValue, activeSection);
     requestAnimationFrame(() => {
       textarea.focus();
       // Keep only original selected text highlighted (not the inserted tags).
@@ -785,21 +809,22 @@ const AdminBlogs = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    const currentStart = textarea.selectionStart ?? draft.content.length;
-    const currentEnd = textarea.selectionEnd ?? draft.content.length;
+    const { activeSection, value } = getEditorContext();
+    const currentStart = textarea.selectionStart ?? value.length;
+    const currentEnd = textarea.selectionEnd ?? value.length;
     const hasLiveSelection = currentEnd > currentStart;
     const start = hasLiveSelection ? currentStart : lastSelectionRef.current.start;
     const end = hasLiveSelection ? currentEnd : lastSelectionRef.current.end;
     if (start === end) return;
 
-    const selected = draft.content.slice(start, end);
+    const selected = value.slice(start, end);
     const wrapped = selected
       .split("\n")
       .map((line) => (line.trim() ? lineWrapper(line) : line))
       .join("\n");
-    const nextValue = draft.content.slice(0, start) + wrapped + draft.content.slice(end);
+    const nextValue = value.slice(0, start) + wrapped + value.slice(end);
 
-    setDraft((prev) => ({ ...prev, content: nextValue }));
+    setEditorContent(nextValue, activeSection);
     requestAnimationFrame(() => {
       textarea.focus();
       textarea.selectionStart = start;
@@ -837,11 +862,38 @@ const AdminBlogs = () => {
     });
   };
 
+  const stepFontSize = (direction: -1 | 1) => {
+    const currentIndex = FONT_SIZE_OPTIONS.indexOf(textFontSize);
+    if (currentIndex >= 0) {
+      const nextIndex = Math.max(
+        0,
+        Math.min(FONT_SIZE_OPTIONS.length - 1, currentIndex + direction)
+      );
+      applyFontSize(FONT_SIZE_OPTIONS[nextIndex]);
+      return;
+    }
+
+    if (direction === 1) {
+      const next = FONT_SIZE_OPTIONS.find((size) => size > textFontSize);
+      applyFontSize(next ?? FONT_SIZE_OPTIONS[FONT_SIZE_OPTIONS.length - 1]);
+      return;
+    }
+
+    for (let index = FONT_SIZE_OPTIONS.length - 1; index >= 0; index -= 1) {
+      if (FONT_SIZE_OPTIONS[index] < textFontSize) {
+        applyFontSize(FONT_SIZE_OPTIONS[index]);
+        return;
+      }
+    }
+    applyFontSize(FONT_SIZE_OPTIONS[0]);
+  };
+
   const applyTextAlign = (align: "left" | "center" | "right") => {
     setTextAlign(align);
     const textarea = textareaRef.current;
     if (!textarea) return;
 
+    const { activeSection, value } = getEditorContext();
     const start = textarea.selectionStart ?? 0;
     const end = textarea.selectionEnd ?? 0;
 
@@ -850,7 +902,6 @@ const AdminBlogs = () => {
       return;
     }
 
-    const value = draft.content;
     const lineStart = value.lastIndexOf("\n", start - 1) + 1;
     const lineEndIndex = value.indexOf("\n", start);
     const lineEnd = lineEndIndex === -1 ? value.length : lineEndIndex;
@@ -858,7 +909,7 @@ const AdminBlogs = () => {
     const alignedLine = `<div align="${align}" style="text-align:${align};">${currentLine || " "}</div>`;
     const nextValue = value.slice(0, lineStart) + alignedLine + value.slice(lineEnd);
 
-    setDraft((prev) => ({ ...prev, content: nextValue }));
+    setEditorContent(nextValue, activeSection);
     requestAnimationFrame(() => {
       textarea.focus();
       textarea.selectionStart = lineStart;
@@ -870,15 +921,16 @@ const AdminBlogs = () => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    const start = textarea.selectionStart ?? draft.content.length;
-    const end = textarea.selectionEnd ?? draft.content.length;
-    const selected = draft.content.slice(start, end).trim() || "link text";
+    const { activeSection, value } = getEditorContext();
+    const start = textarea.selectionStart ?? value.length;
+    const end = textarea.selectionEnd ?? value.length;
+    const selected = value.slice(start, end).trim() || "link text";
     const url = window.prompt("Enter URL", "https://");
     if (!url) return;
 
     const markdown = `[${selected}](${url.trim() || "https://"})`;
-    const nextValue = draft.content.slice(0, start) + markdown + draft.content.slice(end);
-    setDraft((prev) => ({ ...prev, content: nextValue }));
+    const nextValue = value.slice(0, start) + markdown + value.slice(end);
+    setEditorContent(nextValue, activeSection);
 
     requestAnimationFrame(() => {
       textarea.focus();
@@ -901,21 +953,21 @@ const AdminBlogs = () => {
       const imageUrl = await uploadSectionImage(file);
       const textarea = textareaRef.current;
       const markdownImage = `\n\n![${file.name}](${imageUrl})\n\n`;
+      const { activeSection, value } = getEditorContext();
 
       if (!textarea) {
-        setDraft((prev) => ({ ...prev, content: `${prev.content}${markdownImage}` }));
+        setEditorContent(`${value}${markdownImage}`, activeSection);
         return;
       }
 
-      const currentStart = textarea.selectionStart ?? draft.content.length;
-      const currentEnd = textarea.selectionEnd ?? draft.content.length;
+      const currentStart = textarea.selectionStart ?? value.length;
+      const currentEnd = textarea.selectionEnd ?? value.length;
       const hasLiveSelection = currentEnd > currentStart;
       const start = hasLiveSelection ? currentStart : lastSelectionRef.current.start;
       const end = hasLiveSelection ? currentEnd : lastSelectionRef.current.end;
-      const nextContent =
-        draft.content.slice(0, start) + markdownImage + draft.content.slice(end);
+      const nextContent = value.slice(0, start) + markdownImage + value.slice(end);
 
-      setDraft((prev) => ({ ...prev, content: nextContent }));
+      setEditorContent(nextContent, activeSection);
       requestAnimationFrame(() => {
         const cursor = start + markdownImage.length;
         textarea.focus();
@@ -1290,7 +1342,7 @@ const AdminBlogs = () => {
               </button>
 
               <div className="mx-2 h-6 w-px bg-slate-300" />
-              {editorMode === "classic" && (
+              {(
                 <>
                   <button
                     onMouseDown={keepSelection}
@@ -1377,6 +1429,34 @@ const AdminBlogs = () => {
                       </div>
                     )}
                   </div>
+
+                  <div className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-2 py-1">
+                    <Type className="h-4 w-4 text-slate-600" />
+                    <button
+                      type="button"
+                      onMouseDown={keepSelection}
+                      onClick={() => stepFontSize(-1)}
+                      className="rounded-md border border-slate-300 bg-white p-1 text-slate-700 hover:bg-slate-100"
+                      title="Decrease text size"
+                      aria-label="Decrease text size"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="w-10 text-center text-sm font-medium text-slate-600">
+                      {textFontSize}px
+                    </span>
+                    <button
+                      type="button"
+                      onMouseDown={keepSelection}
+                      onClick={() => stepFontSize(1)}
+                      className="rounded-md border border-slate-300 bg-white p-1 text-slate-700 hover:bg-slate-100"
+                      title="Increase text size"
+                      aria-label="Increase text size"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+
                 </>
               )}
               <div className="ml-2 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white p-1">
@@ -1474,6 +1554,10 @@ const AdminBlogs = () => {
                     onSelect={rememberSelection}
                     onKeyUp={rememberSelection}
                     onMouseUp={rememberSelection}
+                    onFocus={(event) => {
+                      textareaRef.current = event.currentTarget;
+                      setActiveSectionId(null);
+                    }}
                     placeholder="Write your blog content..."
                     className="h-[520px] w-full resize-none text-base leading-8 text-slate-700 outline-none"
                   />
@@ -1529,6 +1613,14 @@ const AdminBlogs = () => {
                               onChange={(event) =>
                                 handleSectionTextChange(section.id, event.target.value)
                               }
+                              onFocus={(event) => {
+                                textareaRef.current = event.currentTarget;
+                                setActiveSectionId(section.id);
+                                rememberSelection();
+                              }}
+                              onSelect={rememberSelection}
+                              onKeyUp={rememberSelection}
+                              onMouseUp={rememberSelection}
                               placeholder="Write your content..."
                               className="mt-3 h-36 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-base leading-7 text-slate-700 outline-none focus:border-primary-400"
                             />
