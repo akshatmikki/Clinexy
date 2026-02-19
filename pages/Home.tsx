@@ -153,12 +153,14 @@ const [loadingBlogs, setLoadingBlogs] = useState(true);
 useEffect(() => {
   const fetchBlogs = async () => {
     try {
-      const res = await fetch("https://admin.urest.in:8089/api/blogs");
+      const res = await fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs");
       if (!res.ok) return;
 
       const data = await res.json();
       const rawBlogs: unknown[] = Array.isArray(data)
         ? data
+        : Array.isArray(data?.blogs)
+          ? data.blogs
         : Array.isArray(data?.content)
           ? data.content
           : Array.isArray(data?.data)
@@ -303,8 +305,13 @@ useEffect(() => {
 
 const getExcerpt = (content: unknown, length = 140) => {
   const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ");
-  const stripMarkdownDecorators = (value: string) => value.replace(/[#*\-`]/g, "");
-  const sanitizeText = (value: string) => stripMarkdownDecorators(stripHtml(value));
+  const stripMarkdownImages = (value: string) =>
+    value.replace(/!\[[^\]]*]\((?:[^()\\]|\\.)*\)/g, " ");
+  const stripMarkdownLinks = (value: string) =>
+    value.replace(/\[([^\]]+)]\((?:[^()\\]|\\.)*\)/g, "$1");
+  const stripMarkdownDecorators = (value: string) => value.replace(/[#!*\-`>]/g, "");
+  const sanitizeText = (value: string) =>
+    stripMarkdownDecorators(stripMarkdownLinks(stripMarkdownImages(stripHtml(value))));
   const trimWithEllipsis = (value: string) => {
     const normalized = value.replace(/\s+/g, " ").trim();
     if (!normalized) return "";
@@ -313,54 +320,94 @@ const getExcerpt = (content: unknown, length = 140) => {
       : normalized;
   };
 
-  const pickText = (value: unknown): string | null => {
-    if (typeof value === "string") return value;
-    if (!value || typeof value !== "object") return null;
+  const decodeValue = (value: unknown, depth = 0): string => {
+    if (depth > 8 || value == null) return "";
 
-    const obj = value as {
-      content?: unknown;
-      Content?: unknown;
-      body?: unknown;
-      Body?: unknown;
-      markdown?: unknown;
-      Markdown?: unknown;
-      text?: unknown;
-      Text?: unknown;
-      value?: unknown;
-      Value?: unknown;
-    };
+    if (typeof value === "string") {
+      const normalized = value.trim();
+      if (!normalized) return "";
+      try {
+        return decodeValue(JSON.parse(normalized), depth + 1);
+      } catch {
+        return normalized;
+      }
+    }
 
-    const candidate =
-      obj.content ??
-      obj.Content ??
-      obj.body ??
-      obj.Body ??
-      obj.markdown ??
-      obj.Markdown ??
-      obj.text ??
-      obj.Text ??
-      obj.value ??
-      obj.Value;
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => decodeValue(item, depth + 1))
+        .filter(Boolean)
+        .join(" ");
+    }
 
-    return typeof candidate === "string" ? candidate : null;
+    if (typeof value === "object") {
+      const obj = value as {
+        type?: unknown;
+        sections?: unknown;
+        content?: unknown;
+        Content?: unknown;
+        body?: unknown;
+        Body?: unknown;
+        markdown?: unknown;
+        Markdown?: unknown;
+        text?: unknown;
+        Text?: unknown;
+        value?: unknown;
+        Value?: unknown;
+        excerpt?: unknown;
+        Excerpt?: unknown;
+        summary?: unknown;
+        Summary?: unknown;
+        description?: unknown;
+        Description?: unknown;
+      };
+
+      if (Array.isArray(obj.sections)) {
+        const sectionText = obj.sections
+          .map((section) => {
+            const sectionObj = (section ?? {}) as {
+              text?: unknown;
+            };
+            return typeof sectionObj.text === "string"
+              ? sectionObj.text.trim()
+              : decodeValue(section, depth + 1).trim();
+          })
+          .filter(Boolean)
+          .filter((text, index, array) =>
+            index === 0 ? true : text.toLowerCase() !== array[index - 1].toLowerCase()
+          )
+          .join(" ");
+        if (sectionText) return sectionText;
+      }
+
+      const candidate =
+        obj.content ??
+        obj.Content ??
+        obj.body ??
+        obj.Body ??
+        obj.markdown ??
+        obj.Markdown ??
+        obj.text ??
+        obj.Text ??
+        obj.value ??
+        obj.Value ??
+        obj.excerpt ??
+        obj.Excerpt ??
+        obj.summary ??
+        obj.Summary ??
+        obj.description ??
+        obj.Description;
+
+      if (candidate !== undefined) {
+        return decodeValue(candidate, depth + 1);
+      }
+    }
+
+    return "";
   };
 
-  const contentText = pickText(content);
-  if (!contentText) {
-    return "";
-  }
-
-  try {
-    const decoded = JSON.parse(contentText);
-    const decodedText = pickText(decoded);
-    if (decodedText) {
-      return trimWithEllipsis(sanitizeText(decodedText));
-    }
-  } catch {
-    // Fallback to raw content when value is not JSON encoded.
-  }
-
-  return trimWithEllipsis(sanitizeText(contentText));
+  const decodedText = decodeValue(content);
+  return trimWithEllipsis(sanitizeText(decodedText));
 };
 
   const scrollToHowItWorks = (e: React.MouseEvent) => {

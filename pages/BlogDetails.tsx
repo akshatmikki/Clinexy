@@ -84,12 +84,14 @@ export const BlogDetails = () => {
   useEffect(() => {
     const fetchRecentBlogs = async () => {
       try {
-        const res = await fetch("https://admin.urest.in:8089/api/blogs");
+        const res = await fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs");
         if (!res.ok) return;
 
         const response = await res.json();
         const list: unknown[] = Array.isArray(response)
           ? response
+          : Array.isArray(response?.blogs)
+            ? response.blogs
           : Array.isArray(response?.data)
             ? response.data
             : Array.isArray(response?.content)
@@ -167,7 +169,65 @@ export const BlogDetails = () => {
         text?: unknown;
         body?: unknown;
         value?: unknown;
+        sections?: unknown;
       };
+
+      if (Array.isArray(objectContent.sections)) {
+        const rawSections = objectContent.sections
+          .map((item) => {
+            const section = (item ?? {}) as {
+              imageUrl?: unknown;
+              text?: unknown;
+            };
+            return {
+              image:
+                typeof section.imageUrl === "string" ? section.imageUrl.trim() : "",
+              text: typeof section.text === "string" ? section.text.trim() : "",
+            };
+          })
+          .filter((section) => section.image || section.text);
+
+        const compactSections = rawSections.reduce<typeof rawSections>((acc, section) => {
+          const previous = acc[acc.length - 1];
+          if (!previous) {
+            acc.push(section);
+            return acc;
+          }
+
+          const sameText =
+            section.text &&
+            previous.text &&
+            section.text.toLowerCase() === previous.text.toLowerCase();
+
+          if (sameText) {
+            if (previous.image && !section.image) {
+              return acc;
+            }
+            if (!previous.image && section.image) {
+              acc[acc.length - 1] = section;
+              return acc;
+            }
+            if (previous.image === section.image) {
+              return acc;
+            }
+          }
+
+          acc.push(section);
+          return acc;
+        }, []);
+
+        const sectionMarkdown = compactSections
+          .map((section) => {
+            const parts: string[] = [];
+            if (section.image) parts.push(`![Section image](${section.image})`);
+            if (section.text) parts.push(section.text);
+            return parts.join("\n\n");
+          })
+          .filter(Boolean)
+          .join("\n\n");
+
+        if (sectionMarkdown) return sectionMarkdown;
+      }
 
       const candidate =
         objectContent.content ??
@@ -179,32 +239,26 @@ export const BlogDetails = () => {
       return typeof candidate === "string" ? candidate : null;
     };
 
-    try {
-      const parsed = JSON.parse(content);
+    const decodeValue = (value: unknown, depth = 0): string => {
+      if (depth > 3) return typeof value === "string" ? value : "";
 
-      if (typeof parsed === "string") {
-        return normalizeText(parsed);
-      }
-
-      const extracted = extractFromObject(parsed);
-      if (extracted) {
-        return normalizeText(extracted);
-      }
-
-      // Some APIs double-encode rich text as JSON string inside JSON object.
-      if (typeof parsed === "object" && parsed !== null) {
-        const nestedString = JSON.stringify(parsed);
-        const nestedParsed = JSON.parse(nestedString);
-        const nestedExtracted = extractFromObject(nestedParsed);
-        if (nestedExtracted) {
-          return normalizeText(nestedExtracted);
+      if (typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          return decodeValue(parsed, depth + 1);
+        } catch {
+          return value;
         }
       }
-    } catch {
-      // Fallback to raw content when value is not JSON.
-    }
 
-    return normalizeText(content);
+      const extracted = extractFromObject(value);
+      if (extracted) return decodeValue(extracted, depth + 1);
+
+      return "";
+    };
+
+    const decoded = decodeValue(content);
+    return normalizeText(decoded || content);
   };
 
   const markdownContent = decodeContent(blog.content);

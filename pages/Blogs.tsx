@@ -6,10 +6,19 @@ const Blogs = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("https://admin.urest.in:8089/api/blogs")
+    fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs")
       .then((res) => res.json())
       .then((data) => {
-        setBlogs(data);
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.blogs)
+            ? data.blogs
+            : Array.isArray(data?.content)
+              ? data.content
+              : Array.isArray(data?.data)
+                ? data.data
+                : [];
+        setBlogs(list);
         setLoading(false);
       })
       .catch(() => setLoading(false));

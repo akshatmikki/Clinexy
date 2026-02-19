@@ -9,7 +9,15 @@ const CreateBlog = () => {
     "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80";
 
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  type ContentBlock = {
+    id: string;
+    text: string;
+    image: string;
+  };
+
+  const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([
+    { id: crypto.randomUUID(), text: "", image: "" },
+  ]);
   const [image, setImage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [tags, setTags] = useState("");
@@ -22,6 +30,41 @@ const CreateBlog = () => {
     const reader = new FileReader();
     reader.onloadend = () => setImage(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const handleContentBlockImageUpload = (
+    blockId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
+      if (!dataUrl) return;
+      setContentBlocks((prev) =>
+        prev.map((block) =>
+          block.id === blockId ? { ...block, image: dataUrl } : block
+        )
+      );
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleContentBlockTextChange = (blockId: string, value: string) => {
+    setContentBlocks((prev) =>
+      prev.map((block) => (block.id === blockId ? { ...block, text: value } : block))
+    );
+  };
+
+  const handleAddContentBlock = () => {
+    setContentBlocks((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), text: "", image: "" },
+    ]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,10 +88,25 @@ const CreateBlog = () => {
       return;
     }
 
+    const mergedContent = contentBlocks
+      .map((block) => {
+        const blockParts: string[] = [];
+        if (block.image) blockParts.push(`![Content image](${block.image})`);
+        if (block.text.trim()) blockParts.push(block.text.trim());
+        return blockParts.join("\n\n");
+      })
+      .filter(Boolean)
+      .join("\n\n");
+
+    if (!mergedContent.trim()) {
+      alert("Please add at least one content block.");
+      return;
+    }
+
     const payload = {
       Title: title.trim(),
       Slug: safeSlug,
-      Content: content.trim(),
+      Content: mergedContent,
       AuthorName: "Clinexy Team",
       Status: "Published",
       FeaturedImage: image || DEFAULT_BLOG_IMAGE,
@@ -58,11 +116,12 @@ const CreateBlog = () => {
     formData.append("Title", payload.Title);
     formData.append("Slug", payload.Slug);
     formData.append(
-  "Content",
-  JSON.stringify({
-    body: payload.Content
-  })
-);
+      "Content",
+      JSON.stringify({
+        body: payload.Content,
+        image: payload.FeaturedImage,
+      })
+    );
 
     formData.append("AuthorName", payload.AuthorName);
     formData.append("Status", payload.Status);
@@ -70,7 +129,7 @@ const CreateBlog = () => {
     formData.append("Image", imageFile);
     tagList.forEach((tag) => formData.append("Tags", tag));
 
-    const res = await fetch("https://admin.urest.in:8089/api/blogs", {
+    const res = await fetch("https://admin.urest.in:8089/api/blogs/CreateStructuredBlog", {
       method: "POST",
       body: formData,
     });
@@ -139,19 +198,61 @@ const CreateBlog = () => {
                 />
               </div>
 
-              {/* Content */}
+              {/* Content Blocks */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Content
                 </label>
-                <textarea
-                  rows={8}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Write your blog content here..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  required
-                />
+                <div className="space-y-6">
+                  {contentBlocks.map((block, index) => {
+                    const imageInputId = `contentImageUpload-${block.id}`;
+                    return (
+                      <div key={block.id} className="rounded-2xl border border-slate-200 p-4">
+                        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          Section {index + 1}
+                        </p>
+
+                        <div className="mb-4">
+                          <label
+                            htmlFor={imageInputId}
+                            className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary-400 hover:text-primary-600"
+                          >
+                            <ImagePlus className="h-4 w-4" />
+                            Upload Image
+                          </label>
+                          <input
+                            id={imageInputId}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleContentBlockImageUpload(block.id, e)}
+                          />
+                          {block.image && (
+                            <img
+                              src={block.image}
+                              alt={`Content section ${index + 1}`}
+                              className="mt-3 h-40 w-full rounded-xl border border-slate-200 object-cover"
+                            />
+                          )}
+                        </div>
+
+                        <textarea
+                          rows={6}
+                          className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                          placeholder="Write your content..."
+                          value={block.text}
+                          onChange={(e) => handleContentBlockTextChange(block.id, e.target.value)}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  <div className="flex justify-start">
+                    <Button type="button" onClick={handleAddContentBlock}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               {/* Tags */}
