@@ -312,21 +312,21 @@ export const BlogDetails = () => {
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-3 gap-16">
           {/* Main Content */}
           <article className="lg:col-span-2">
-            <div className="mb-10 overflow-hidden rounded-2xl border border-slate-200 shadow-lg">
-              <div className="h-[300px] w-full md:h-[420px]">
+            <div className="mb-10 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-lg">
+              <div className="w-full">
                 <button
                   type="button"
                   onClick={() =>
                     setActiveImage({ src: featuredImage, alt: blog.title || "Featured image" })
                   }
-                  className="block h-full w-full cursor-zoom-in"
+                  className="block w-full cursor-zoom-in"
                   aria-label="View full image"
                   title="View full image"
                 >
                   <img
                     src={featuredImage}
                     alt={blog.title}
-                    className="h-full w-full object-cover object-center"
+                    className="max-h-[560px] w-full object-contain object-center"
                   />
                 </button>
               </div>
@@ -439,7 +439,7 @@ export const BlogDetails = () => {
                     if (!imgProps.src) return null;
                     return (
                       <figure className="my-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-                        <div className="h-[280px] w-full md:h-[360px]">
+                        <div className="w-full">
                           <button
                             type="button"
                             onClick={() =>
@@ -448,14 +448,14 @@ export const BlogDetails = () => {
                                 alt: imgProps.alt || "Blog section image",
                               })
                             }
-                            className="block h-full w-full cursor-zoom-in"
+                            className="block w-full cursor-zoom-in"
                             aria-label="View full image"
                             title="View full image"
                           >
                             <img
                               {...imgProps}
                               alt={imgProps.alt || "Blog section image"}
-                              className="h-full w-full object-cover object-center"
+                              className="max-h-[560px] w-full object-contain object-center"
                               loading="lazy"
                             />
                           </button>

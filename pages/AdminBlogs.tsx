@@ -1605,7 +1605,7 @@ const AdminBlogs = () => {
                               <img
                                 src={section.image}
                                 alt={`Section ${index + 1}`}
-                                className="mt-3 h-36 w-full rounded-lg border border-slate-200 object-cover"
+                                className="mt-3 max-h-72 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain"
                               />
                             )}
                             <textarea
@@ -1703,7 +1703,7 @@ const AdminBlogs = () => {
                       <img
                         src={previewImage || draft.featuredImage}
                         alt="Featured preview"
-                        className="h-32 w-full rounded border border-slate-200 object-cover"
+                        className="max-h-72 w-full rounded border border-slate-200 bg-slate-50 object-contain"
                       />
                     )}
                   </div>
