@@ -48,6 +48,16 @@ type RawBlog = {
   CreatedAt?: unknown;
   sections?: unknown;
   Sections?: unknown;
+  metaTitle?: unknown;
+  MetaTitle?: unknown;
+  metaDescription?: unknown;
+  MetaDescription?: unknown;
+  metaKeywords?: unknown;
+  MetaKeywords?: unknown;
+  canonicalUrl?: unknown;
+  CanonicalUrl?: unknown;
+  ogImage?: unknown;
+  OgImage?: unknown;
 };
 
 type BlogRecord = {
@@ -61,16 +71,29 @@ type BlogRecord = {
   tags: string[];
   status: string;
   createdAt?: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  canonicalUrl: string;
+  ogImage: string;
 };
 
 type BlogDraft = {
   title: string;
   slug: string;
+
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  canonicalUrl: string;
+  ogImage: string;
+
   content: string;
   featuredImage: string;
   authorName: string;
   tags: string;
   status: string;
+
   originalId: string;
   originalSlug: string;
 };
@@ -78,6 +101,8 @@ type BlogDraft = {
 type ContentSection = {
   id: string;
   image: string;
+  altText: string;   // NEW
+  heading: string;   // NEW (H2)
   text: string;
   imageFile?: File | null;
 };
@@ -85,11 +110,19 @@ type ContentSection = {
 const emptyDraft: BlogDraft = {
   title: "",
   slug: "",
+
+  metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",   // ✅ ADD
+  canonicalUrl: "",
+  ogImage: "",
+
   content: "",
   featuredImage: "",
   authorName: "Clinexy Team",
   tags: "",
   status: "Published",
+
   originalId: "",
   originalSlug: "",
 };
@@ -97,6 +130,8 @@ const emptyDraft: BlogDraft = {
 const emptyContentSection = (): ContentSection => ({
   id: crypto.randomUUID(),
   image: "",
+  altText: "",
+  heading: "",
   text: "",
   imageFile: null,
 });
@@ -105,11 +140,13 @@ const buildContentFromSections = (sections: ContentSection[]) =>
   sections
     .map((section) => {
       const parts: string[] = [];
-      if (section.image.trim()) {
-        parts.push(`![Content image](${section.image.trim()})`);
+      const image = String(section.image ?? "").trim();
+      const text = String(section.text ?? "").trim();
+      if (image) {
+        parts.push(`![Content image](${image})`);
       }
-      if (section.text.trim()) {
-        parts.push(section.text.trim());
+      if (text) {
+        parts.push(text);
       }
       return parts.join("\n\n");
     })
@@ -123,14 +160,16 @@ const parseSectionsFromContent = (content: string): ContentSection[] => {
   const imageRegex = /!\[[^\]]*]\(([^)]+)\)/g;
   const imageMatches = [...normalized.matchAll(imageRegex)];
   if (imageMatches.length === 0) {
-    return [
-      {
-        id: crypto.randomUUID(),
-        image: "",
-        text: normalized,
-        imageFile: null,
-      },
-    ];
+      return [
+        {
+          id: crypto.randomUUID(),
+          image: "",
+          altText: "",
+          heading: "",
+          text: normalized,
+          imageFile: null,
+        },
+      ];
   }
 
   const sections: ContentSection[] = [];
@@ -143,6 +182,8 @@ const parseSectionsFromContent = (content: string): ContentSection[] => {
       sections.push({
         id: crypto.randomUUID(),
         image: "",
+        altText: "",
+        heading: "",
         text: before,
         imageFile: null,
       });
@@ -158,6 +199,8 @@ const parseSectionsFromContent = (content: string): ContentSection[] => {
     sections.push({
       id: crypto.randomUUID(),
       image: imageUrl,
+      altText: "",
+      heading: "",
       text: textAfterImage,
       imageFile: null,
     });
@@ -238,6 +281,8 @@ const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[]
     {
       id: crypto.randomUUID(),
       image,
+      altText: "",
+      heading: "",
       text,
       imageFile: null,
     },
@@ -394,12 +439,39 @@ const normalizeBlog = (item: unknown, index: number): BlogRecord => {
       (typeof raw.createdAt === "string" && raw.createdAt) ||
       (typeof raw.CreatedAt === "string" && raw.CreatedAt) ||
       undefined,
+    metaTitle:
+      (typeof raw.metaTitle === "string" && raw.metaTitle) ||
+      (typeof raw.MetaTitle === "string" && raw.MetaTitle) ||
+      "",
+    metaDescription:
+      (typeof raw.metaDescription === "string" && raw.metaDescription) ||
+      (typeof raw.MetaDescription === "string" && raw.MetaDescription) ||
+      "",
+    metaKeywords:
+      (typeof raw.metaKeywords === "string" && raw.metaKeywords) ||
+      (typeof raw.MetaKeywords === "string" && raw.MetaKeywords) ||
+      "",
+    canonicalUrl:
+      (typeof raw.canonicalUrl === "string" && raw.canonicalUrl) ||
+      (typeof raw.CanonicalUrl === "string" && raw.CanonicalUrl) ||
+      "",
+    ogImage:
+      (typeof raw.ogImage === "string" && raw.ogImage) ||
+      (typeof raw.OgImage === "string" && raw.OgImage) ||
+      "",
   };
 };
 
 const toDraft = (blog: BlogRecord): BlogDraft => ({
   title: blog.title,
   slug: blog.slug,
+
+  metaTitle: blog.metaTitle || "",
+  metaDescription: blog.metaDescription || "",
+  metaKeywords: blog.metaKeywords || "",
+  canonicalUrl: blog.canonicalUrl || "",
+  ogImage: blog.ogImage || "",
+
   content: blog.content,
   featuredImage: blog.featuredImage,
   authorName: blog.authorName,
@@ -507,9 +579,8 @@ const AdminBlogs = () => {
 
       const selected =
         normalized.find((blog) => blog.slug === preferredSlug) || normalized[0];
-      const selectedWithContent = selected.content.trim()
-        ? selected
-        : await fetchBlogDetail(selected.slug, selected);
+      // List API may omit SEO fields, so always hydrate selected blog from detail API.
+      const selectedWithContent = (await fetchBlogDetail(selected.slug, selected)) || selected;
 
       if (
         selectedWithContent &&
@@ -563,18 +634,16 @@ const AdminBlogs = () => {
     setImageFile(null);
     setError("");
 
-    if (!blog.content.trim()) {
-      setLoadingDetail(true);
-      const detailed = await fetchBlogDetail(blog.slug, blog);
-      if (detailed) {
-        setDraftWithSections(toDraft(detailed), detailed.sections);
-        setPreviewImage(detailed.featuredImage);
-        setBlogs((prev) =>
-          prev.map((item) => (item.slug === detailed.slug ? detailed : item))
-        );
-      }
-      setLoadingDetail(false);
+    setLoadingDetail(true);
+    const detailed = await fetchBlogDetail(blog.slug, blog);
+    if (detailed) {
+      setDraftWithSections(toDraft(detailed), detailed.sections);
+      setPreviewImage(detailed.featuredImage);
+      setBlogs((prev) =>
+        prev.map((item) => (item.slug === detailed.slug ? detailed : item))
+      );
     }
+    setLoadingDetail(false);
   };
 
   const handleCreateNew = () => {
@@ -592,6 +661,10 @@ const AdminBlogs = () => {
         sectionsOverride.map((section) => ({
           ...section,
           id: section.id || crypto.randomUUID(),
+          image: String(section.image ?? ""),
+          altText: String(section.altText ?? ""),
+          heading: String(section.heading ?? ""),
+          text: String(section.text ?? ""),
           imageFile: null,
         }))
       );
@@ -1023,7 +1096,7 @@ const AdminBlogs = () => {
     return url;
   };
 
-  const buildStructuredBlogPayload = async (resolvedSlug: string) => {
+const buildStructuredBlogPayload = async (resolvedSlug: string) => {
     const tags = getTagList();
     const authorName = draft.authorName.trim() || "Clinexy Team";
     const status = draft.status || "Published";
@@ -1033,25 +1106,36 @@ const AdminBlogs = () => {
         ? buildContentFromSections(contentSections).trim()
         : draft.content.trim();
     const extractedSections = parseSectionsFromContent(bodyMarkdown);
-    const sections = extractedSections
-      .map((section, index) => ({
-        imageUrl: section.image.trim(),
-        heading: `Section ${index + 1}`,
-        text: section.text.trim(),
+    const sections = contentSections
+      .map((section) => ({
+        imageUrl: String(section.image ?? "").trim(),
+        altText: String(section.altText ?? "").trim(),
+        heading: String(section.heading ?? "").trim(),
+        text: String(section.text ?? "").trim(),
       }))
       .filter((section) => section.imageUrl || section.text);
+    const normalizedMetaKeywords =
+      (draft.metaKeywords ?? "").trim() || tags.join(", ");
 
     return {
-      title: draft.title.trim(),
-      slug: resolvedSlug,
-      authorName,
-      tags,
-      status,
-      featuredImage,
-      FeaturedImage: featuredImage,
-      sections,
-      content: bodyMarkdown,
-    };
+  title: draft.title.trim(),
+  slug: resolvedSlug,
+
+  // ✅ ADD THESE 4 LINES
+ metaTitle: draft.metaTitle?.trim() || draft.title.trim(),
+metaDescription: draft.metaDescription?.trim() || "",
+metaKeywords: normalizedMetaKeywords,
+canonicalUrl: draft.canonicalUrl?.trim() || "",
+ogImage: draft.ogImage?.trim() || featuredImage,
+
+  authorName,
+  tags,
+  status,
+  featuredImage,
+  FeaturedImage: featuredImage,
+  sections,
+  content: bodyMarkdown,
+};
   };
 
   const buildUpdateBlogPayload = async (resolvedSlug: string, blogId: string) => {
@@ -1065,9 +1149,9 @@ const AdminBlogs = () => {
     const extractedSections = parseSectionsFromContent(bodyMarkdown);
     const sections = extractedSections
       .map((section, index) => ({
-        imageUrl: section.image.trim(),
+        imageUrl: String(section.image ?? "").trim(),
         heading: `Section ${index + 1}`,
-        text: section.text.trim(),
+        text: String(section.text ?? "").trim(),
       }))
       .filter((section) => section.imageUrl || section.text);
     const featuredImageFromSectionZero = sections[0]?.imageUrl?.trim() || "";
@@ -1075,19 +1159,29 @@ const AdminBlogs = () => {
       (previewImage || draft.featuredImage || "").trim() ||
       featuredImageFromSectionZero ||
       DEFAULT_BLOG_IMAGE;
+    const normalizedMetaKeywords =
+      (draft.metaKeywords ?? "").trim() || tags.join(", ");
 
-    return {
-      id: blogId,
-      title: draft.title.trim(),
-      slug: resolvedSlug,
-      authorId: null,
-      authorName,
-      tags,
-      status,
-      featuredImage,
-      FeaturedImage: featuredImage,
-      sections,
-    };
+   return {
+  id: blogId,
+  title: draft.title.trim(),
+  slug: resolvedSlug,
+
+  // ✅ ADD THESE 4 LINES
+  metaTitle: draft.metaTitle?.trim() || draft.title.trim(),
+  metaDescription: draft.metaDescription?.trim() || "",
+  metaKeywords: normalizedMetaKeywords,
+  canonicalUrl: draft.canonicalUrl?.trim() || "",
+  ogImage: draft.ogImage?.trim() || featuredImage,
+
+  authorId: null,
+  authorName,
+  tags,
+  status,
+  featuredImage,
+  FeaturedImage: featuredImage,
+  sections,
+};
   };
 
   const parseApiError = async (response: Response) => {
@@ -1564,69 +1658,106 @@ const AdminBlogs = () => {
                 ) : (
                   <>
                     <div className="max-h-[520px] space-y-4 overflow-y-auto pr-1">
-                      {contentSections.map((section, index) => {
-                        const inputId = `admin-content-image-${section.id}`;
-                        return (
-                          <div key={section.id} className="rounded-xl border border-slate-200 p-4">
-                            <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Section {index + 1}
-                            </div>
-                            <div className="mb-3 flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleInsertSectionAfter(section.id)}
-                                className="inline-flex items-center rounded-md border border-primary-300 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100"
-                              >
-                                Insert Below
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteSection(section.id)}
-                                className="inline-flex items-center rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100"
-                              >
-                                Delete Section
-                              </button>
-                            </div>
-                            <label
-                              htmlFor={inputId}
-                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary-400 hover:text-primary-600"
-                            >
-                              <ImagePlus className="h-4 w-4" />
-                              Upload Image
-                            </label>
-                            <input
-                              id={inputId}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(event) => handleSectionImageUpload(section.id, event)}
-                            />
-                            {section.image && (
-                              <img
-                                src={section.image}
-                                alt={`Section ${index + 1}`}
-                                className="mt-3 max-h-72 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain"
-                              />
-                            )}
-                            <textarea
-                              value={section.text}
-                              onChange={(event) =>
-                                handleSectionTextChange(section.id, event.target.value)
-                              }
-                              onFocus={(event) => {
-                                textareaRef.current = event.currentTarget;
-                                setActiveSectionId(section.id);
-                                rememberSelection();
-                              }}
-                              onSelect={rememberSelection}
-                              onKeyUp={rememberSelection}
-                              onMouseUp={rememberSelection}
-                              placeholder="Write your content..."
-                              className="mt-3 h-36 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-base leading-7 text-slate-700 outline-none focus:border-primary-400"
-                            />
-                          </div>
-                        );
-                      })}
+                     {contentSections.map((section, index) => {
+  const inputId = `admin-content-image-${section.id}`;
+  return (
+    <div key={section.id} className="rounded-xl border border-slate-200 p-4">
+      
+      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        Section {index + 1}
+      </div>
+
+      {/* SECTION HEADING (SEO IMPORTANT) */}
+      <input
+        value={section.heading || ""}
+        onChange={(event) =>
+          updateSections((prev) =>
+            prev.map((s) =>
+              s.id === section.id ? { ...s, heading: event.target.value } : s
+            )
+          )
+        }
+        placeholder="Section Heading (H2 - Important for SEO)"
+        className="mb-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium"
+      />
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => handleInsertSectionAfter(section.id)}
+          className="inline-flex items-center rounded-md border border-primary-300 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-100"
+        >
+          Insert Below
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleDeleteSection(section.id)}
+          className="inline-flex items-center rounded-md border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100"
+        >
+          Delete Section
+        </button>
+      </div>
+
+      {/* IMAGE UPLOAD */}
+      <label
+        htmlFor={inputId}
+        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:border-primary-400 hover:text-primary-600"
+      >
+        <ImagePlus className="h-4 w-4" />
+        Upload Image
+      </label>
+
+      <input
+        id={inputId}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => handleSectionImageUpload(section.id, event)}
+      />
+
+      {/* ALT TEXT FIELD (SEO CRITICAL) */}
+      <input
+        value={section.altText || ""}
+        onChange={(event) =>
+          updateSections((prev) =>
+            prev.map((s) =>
+              s.id === section.id ? { ...s, altText: event.target.value } : s
+            )
+          )
+        }
+        placeholder="Image ALT Text (Describe image for Google)"
+        className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+      />
+
+      {section.image && (
+        <img
+          src={section.image}
+          alt={section.altText || section.heading || `Section ${index + 1}`}
+          className="mt-3 max-h-72 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain"
+        />
+      )}
+
+      {/* CONTENT TEXTAREA */}
+      <textarea
+        value={section.text}
+        onChange={(event) =>
+          handleSectionTextChange(section.id, event.target.value)
+        }
+        onFocus={(event) => {
+          textareaRef.current = event.currentTarget;
+          setActiveSectionId(section.id);
+          rememberSelection();
+        }}
+        onSelect={rememberSelection}
+        onKeyUp={rememberSelection}
+        onMouseUp={rememberSelection}
+        placeholder="Write your content..."
+        className="mt-3 h-36 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-base leading-7 text-slate-700 outline-none focus:border-primary-400"
+      />
+    </div>
+  );
+})}
                     </div>
                     <button
                       type="button"
@@ -1641,81 +1772,171 @@ const AdminBlogs = () => {
             </section>
 
             <aside className="border-l border-slate-300 bg-slate-50 p-4">
-              <div className="space-y-5">
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <div className="mb-3 text-sm font-semibold text-slate-700">Post Settings</div>
-                  <div className="space-y-3">
-                    <input
-                      value={draft.slug}
-                      onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, slug: event.target.value }))
-                      }
-                      placeholder="slug"
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <input
-                      value={draft.authorName}
-                      onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, authorName: event.target.value }))
-                      }
-                      placeholder="author"
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <input
-                      value={draft.tags}
-                      onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, tags: event.target.value }))
-                      }
-                      placeholder="tags: clinic,care"
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <select
-                      value={draft.status}
-                      onChange={(event) =>
-                        setDraft((prev) => ({ ...prev, status: event.target.value }))
-                      }
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                    >
-                      <option value="Published">Published</option>
-                      <option value="Draft">Draft</option>
-                    </select>
-                    <input
-                      value={draft.featuredImage}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setDraft((prev) => ({ ...prev, featuredImage: value }));
-                        setPreviewImage(value);
-                      }}
-                      placeholder="featured image url"
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-600 hover:border-primary-400 hover:text-primary-600">
-                      <ImagePlus className="h-4 w-4" />
-                      Upload image
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    {(previewImage || draft.featuredImage) && (
-                      <img
-                        src={previewImage || draft.featuredImage}
-                        alt="Featured preview"
-                        className="max-h-72 w-full rounded border border-slate-200 bg-slate-50 object-contain"
-                      />
-                    )}
-                  </div>
-                </div>
+  <div className="space-y-5">
 
-                {error && (
-                  <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                    {error}
-                  </div>
-                )}
-              </div>
-            </aside>
+    {/* ================= POST SETTINGS ================= */}
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="mb-3 text-sm font-semibold text-slate-700">
+        Post Settings
+      </div>
+
+      <div className="space-y-3">
+        <input
+          value={draft.slug}
+          onChange={(event) =>
+            setDraft((prev) => ({ ...prev, slug: event.target.value }))
+          }
+          placeholder="slug"
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        />
+
+        <input
+          value={draft.authorName}
+          onChange={(event) =>
+            setDraft((prev) => ({ ...prev, authorName: event.target.value }))
+          }
+          placeholder="author"
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        />
+
+        <input
+          value={draft.tags}
+          onChange={(event) =>
+            setDraft((prev) => ({ ...prev, tags: event.target.value }))
+          }
+          placeholder="tags: clinic,care"
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        />
+
+        <select
+          value={draft.status}
+          onChange={(event) =>
+            setDraft((prev) => ({ ...prev, status: event.target.value }))
+          }
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        >
+          <option value="Published">Published</option>
+          <option value="Draft">Draft</option>
+        </select>
+
+        <input
+          value={draft.featuredImage}
+          onChange={(event) => {
+            const value = event.target.value;
+            setDraft((prev) => ({ ...prev, featuredImage: value }));
+            setPreviewImage(value);
+          }}
+          placeholder="featured image url"
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+        />
+
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-slate-300 px-3 py-2 text-sm text-slate-600 hover:border-primary-400 hover:text-primary-600">
+          <ImagePlus className="h-4 w-4" />
+          Upload image
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+        </label>
+
+        {(previewImage || draft.featuredImage) && (
+          <img
+            src={previewImage || draft.featuredImage}
+            alt="Featured preview"
+            className="max-h-72 w-full rounded border border-slate-200 bg-slate-50 object-contain"
+          />
+        )}
+      </div>
+    </div>
+
+    {/* ================= SEO SETTINGS ================= */}
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="mb-3 text-sm font-semibold text-slate-700">
+        SEO Settings
+      </div>
+
+      <input
+        value={draft.metaTitle || ""}
+        maxLength={60}
+        onChange={(e) =>
+          setDraft((prev) => ({ ...prev, metaTitle: e.target.value }))
+        }
+        placeholder="Meta Title (60 chars recommended)"
+        className="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+      />
+
+      <textarea
+        value={draft.metaDescription || ""}
+        maxLength={160}
+        onChange={(e) =>
+          setDraft((prev) => ({
+            ...prev,
+            metaDescription: e.target.value,
+          }))
+        }
+        placeholder="Meta Description (150-160 chars)"
+        className="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+      />
+
+      <input
+  value={draft.metaKeywords}
+  onChange={(e) =>
+    setDraft((prev) => ({ ...prev, metaKeywords: e.target.value }))
+  }
+  placeholder="Keywords (comma separated)"
+  className="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+/>
+
+      <input
+        value={draft.canonicalUrl || ""}
+        onChange={(e) =>
+          setDraft((prev) => ({
+            ...prev,
+            canonicalUrl: e.target.value,
+          }))
+        }
+        placeholder="Canonical URL"
+        className="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-sm"
+      />
+
+      <input
+        value={draft.ogImage || ""}
+        onChange={(e) =>
+          setDraft((prev) => ({ ...prev, ogImage: e.target.value }))
+        }
+        placeholder="OG Image URL"
+        className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+      />
+
+      {/* GOOGLE PREVIEW */}
+      <div className="mt-4 rounded border border-slate-200 bg-slate-50 p-3">
+        <div className="text-blue-700 text-base font-medium truncate">
+          {draft.metaTitle || draft.title || "Meta title preview"}
+        </div>
+
+        <div className="text-green-600 text-xs truncate">
+          clinexy.com/blog/{draft.slug || "your-slug"}
+        </div>
+
+        <div className="mt-1 text-sm text-slate-600 line-clamp-2">
+          {draft.metaDescription ||
+            draft.content?.slice(0, 150) ||
+            "Meta description preview..."}
+        </div>
+      </div>
+    </div>
+
+    {/* ================= ERROR BOX ================= */}
+    {error && (
+      <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        {error}
+      </div>
+    )}
+
+  </div>
+</aside>
           </div>
         </div>
       </div>
@@ -1724,3 +1945,4 @@ const AdminBlogs = () => {
 };
 
 export default AdminBlogs;
+

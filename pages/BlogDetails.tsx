@@ -4,6 +4,7 @@ import { Users, MessageSquare, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import { Helmet } from "react-helmet-async";
 
 const DEFAULT_BLOG_IMAGE =
   "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80";
@@ -18,6 +19,11 @@ interface Blog {
   category?: string;
   tags: string[];
   createdAt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
 }
 
 export const BlogDetails = () => {
@@ -46,6 +52,17 @@ export const BlogDetails = () => {
       Tags?: unknown;
       createdAt?: unknown;
       CreatedAt?: unknown;
+      metaTitle?: unknown;
+      MetaTitle?: unknown;
+      metaDescription?: unknown;
+      MetaDescription?: unknown;
+      metaKeywords?: unknown;
+      MetaKeywords?: unknown;
+      canonicalUrl?: unknown;
+      CanonicalUrl?: unknown;
+      ogImage?: unknown;
+      OgImage?: unknown;
+      OpenGraphImage?: unknown;
     };
 
     const title =
@@ -82,6 +99,27 @@ export const BlogDetails = () => {
         (typeof raw.createdAt === "string" && raw.createdAt) ||
         (typeof raw.CreatedAt === "string" && raw.CreatedAt) ||
         undefined,
+      metaTitle:
+        (typeof raw.metaTitle === "string" && raw.metaTitle) ||
+        (typeof raw.MetaTitle === "string" && raw.MetaTitle) ||
+        undefined,
+      metaDescription:
+        (typeof raw.metaDescription === "string" && raw.metaDescription) ||
+        (typeof raw.MetaDescription === "string" && raw.MetaDescription) ||
+        undefined,
+      metaKeywords:
+        (typeof raw.metaKeywords === "string" && raw.metaKeywords) ||
+        (typeof raw.MetaKeywords === "string" && raw.MetaKeywords) ||
+        undefined,
+      canonicalUrl:
+        (typeof raw.canonicalUrl === "string" && raw.canonicalUrl) ||
+        (typeof raw.CanonicalUrl === "string" && raw.CanonicalUrl) ||
+        undefined,
+      ogImage:
+        (typeof raw.ogImage === "string" && raw.ogImage) ||
+        (typeof raw.OgImage === "string" && raw.OgImage) ||
+        (typeof raw.OpenGraphImage === "string" && raw.OpenGraphImage) ||
+        undefined,
     };
   };
 
@@ -96,15 +134,14 @@ export const BlogDetails = () => {
           ? response
           : Array.isArray(response?.blogs)
             ? response.blogs
-          : Array.isArray(response?.data)
-            ? response.data
-            : Array.isArray(response?.content)
-              ? response.content
-              : [];
+            : Array.isArray(response?.data)
+              ? response.data
+              : Array.isArray(response?.content)
+                ? response.content
+                : [];
 
-        const normalized = list.map((item, index) => normalizeBlog(item, index));
+        const normalized = list.map((entry, idx) => normalizeBlog(entry, idx));
 
-        // Exclude current blog + show latest first
         const filtered = normalized
           .filter((b) => b.slug !== slug)
           .sort((a, b) => {
@@ -128,15 +165,12 @@ export const BlogDetails = () => {
 
     const fetchBlog = async () => {
       try {
-        const res = await fetch(
-          `https://admin.urest.in:8089/api/blogs/${slug}`
-        );
-
+        const res = await fetch(`https://admin.urest.in:8089/api/blogs/${slug}`);
         if (!res.ok) throw new Error("Blog not found");
 
         const data = await res.json();
         setBlog(normalizeBlog(data, 0));
-      } catch (err) {
+      } catch {
         setError("Blog not found");
       } finally {
         setLoading(false);
@@ -160,20 +194,13 @@ export const BlogDetails = () => {
   }, [activeImage]);
 
   if (loading) {
-    return (
-      <div className="py-40 text-center text-slate-500">
-        Loading blog...
-      </div>
-    );
+    return <div className="py-40 text-center text-slate-500">Loading blog...</div>;
   }
 
   if (error || !blog) {
-    return (
-      <div className="py-40 text-center text-red-600">
-        {error || "Blog not found"}
-      </div>
-    );
+    return <div className="py-40 text-center text-red-600">{error || "Blog not found"}</div>;
   }
+
   const decodeContent = (content: string) => {
     const normalizeText = (value: string) => value.replace(/\r\n/g, "\n");
 
@@ -191,14 +218,10 @@ export const BlogDetails = () => {
 
       if (Array.isArray(objectContent.sections)) {
         const rawSections = objectContent.sections
-          .map((item) => {
-            const section = (item ?? {}) as {
-              imageUrl?: unknown;
-              text?: unknown;
-            };
+          .map((entry) => {
+            const section = (entry ?? {}) as { imageUrl?: unknown; text?: unknown };
             return {
-              image:
-                typeof section.imageUrl === "string" ? section.imageUrl.trim() : "",
+              image: typeof section.imageUrl === "string" ? section.imageUrl.trim() : "",
               text: typeof section.text === "string" ? section.text.trim() : "",
             };
           })
@@ -217,16 +240,12 @@ export const BlogDetails = () => {
             section.text.toLowerCase() === previous.text.toLowerCase();
 
           if (sameText) {
-            if (previous.image && !section.image) {
-              return acc;
-            }
+            if (previous.image && !section.image) return acc;
             if (!previous.image && section.image) {
               acc[acc.length - 1] = section;
               return acc;
             }
-            if (previous.image === section.image) {
-              return acc;
-            }
+            if (previous.image === section.image) return acc;
           }
 
           acc.push(section);
@@ -280,23 +299,62 @@ export const BlogDetails = () => {
 
   const markdownContent = decodeContent(blog.content);
   const featuredImage = blog.featuredImage || DEFAULT_BLOG_IMAGE;
+  const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://clinexy.com";
+  const defaultCanonicalUrl = `${siteOrigin}/blogs/${blog.slug}`;
+  const canonicalHref = (() => {
+    const value = blog.canonicalUrl?.trim();
+    if (!value) return defaultCanonicalUrl;
+    try {
+      return new URL(value, siteOrigin).toString();
+    } catch {
+      return defaultCanonicalUrl;
+    }
+  })();
+  const plainTextContent = markdownContent
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[#*_`>~-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const seoTitle = blog.metaTitle?.trim() || blog.title;
+  const seoDescription = (blog.metaDescription?.trim() || plainTextContent).slice(0, 160);
+  const ogImage = blog.ogImage?.trim() || featuredImage;
+  const keywordsFromTags = (blog.tags || [])
+    .map((tag) => String(tag).trim())
+    .filter(Boolean)
+    .join(", ");
+  const seoKeywords = blog.metaKeywords?.trim() || keywordsFromTags;
   const normalizedMarkdownContent = markdownContent
-    // Avoid accidental thematic breaks (---, ***, ___) turning into horizontal lines.
     .replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, "")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[^*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/gm, "$1<em>$2</em>");
+
   return (
     <>
-      {/* Hero */}
+      <Helmet>
+        <title>{seoTitle}</title>
+        <meta name="description" content={seoDescription} />
+        <link rel="canonical" href={canonicalHref} />
+        {seoKeywords && <meta name="keywords" content={seoKeywords} />}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={seoTitle} />
+        <meta property="og:description" content={seoDescription} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:url" content={canonicalHref} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seoTitle} />
+        <meta name="twitter:description" content={seoDescription} />
+        <meta name="twitter:image" content={ogImage} />
+      </Helmet>
+
       <section
         className="h-[420px] bg-cover bg-center relative flex items-center justify-center"
         style={{ backgroundImage: `url(${featuredImage})` }}
       >
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative text-center text-white max-w-4xl px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {blog.title}
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{blog.title}</h1>
           <p className="text-sm text-slate-200">
             <Link to="/" className="hover:underline">
               Home
@@ -307,10 +365,8 @@ export const BlogDetails = () => {
         </div>
       </section>
 
-      {/* Content */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-3 gap-16">
-          {/* Main Content */}
           <article className="lg:col-span-2">
             <div className="mb-10 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-lg">
               <div className="w-full">
@@ -332,7 +388,6 @@ export const BlogDetails = () => {
               </div>
             </div>
 
-            {/* Meta */}
             <div className="flex flex-wrap gap-6 text-sm text-slate-500 mb-6">
               <span className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary-500" />
@@ -347,33 +402,24 @@ export const BlogDetails = () => {
               )}
 
               <span className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary-500" />
-                0 Comments
+                <MessageSquare className="h-4 w-4 text-primary-500" />0 Comments
               </span>
             </div>
 
-            {/* Title */}
-            <h2 className="text-3xl font-bold text-slate-900 mb-8">
-              {blog.title}
-            </h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-8">{blog.title}</h2>
 
-            {/* Blog Content */}
             <div
               className="
     prose prose-slate max-w-none
-
     prose-p:leading-7
     prose-p:my-3
-
     prose-h2:text-2xl
     prose-h2:font-bold
     prose-h2:mt-14
     prose-h2:mb-6
-
     prose-ul:my-6
     prose-ul:pl-6
     prose-li:my-2
-
     prose-blockquote:my-8
     prose-blockquote:border-l-4
     prose-blockquote:border-primary-500
@@ -382,9 +428,7 @@ export const BlogDetails = () => {
     prose-blockquote:py-4
     prose-blockquote:italic
   "
-              style={{
-                lineHeight: 1.8,
-              }}
+              style={{ lineHeight: 1.8 }}
             >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -470,10 +514,7 @@ export const BlogDetails = () => {
                     <ol className="list-decimal list-inside pl-0 my-6 space-y-2" {...props} />
                   ),
                   hr: ({ node, ...props }) => (
-                    <hr
-                      {...props}
-                      className="my-8 border-0 border-t border-slate-300"
-                    />
+                    <hr {...props} className="my-8 border-0 border-t border-slate-300" />
                   ),
                 }}
               >
@@ -481,7 +522,6 @@ export const BlogDetails = () => {
               </ReactMarkdown>
             </div>
 
-            {/* Tags */}
             {blog.tags?.length > 0 && (
               <div className="flex flex-wrap gap-3 mt-12">
                 {blog.tags.map((tag) => (
@@ -496,9 +536,7 @@ export const BlogDetails = () => {
             )}
           </article>
 
-          {/* Sidebar */}
           <aside className="space-y-12">
-            {/* Search */}
             <div className="bg-slate-50 p-6 rounded-xl border">
               <h3 className="font-bold text-lg mb-4">Search</h3>
               <input
@@ -507,39 +545,36 @@ export const BlogDetails = () => {
               />
             </div>
 
-            {/* Placeholder Sidebar Blocks */}
-           <div className="bg-slate-50 p-6 rounded-xl border">
-  <h3 className="font-bold text-lg mb-4">Recent Posts</h3>
+            <div className="bg-slate-50 p-6 rounded-xl border">
+              <h3 className="font-bold text-lg mb-4">Recent Posts</h3>
 
-  {recentBlogs.length === 0 ? (
-    <p className="text-slate-500 text-sm">No recent posts.</p>
-  ) : (
-    <ul className="space-y-4">
-      {recentBlogs.map((b) => (
-        <li key={b.id}>
-          <Link
-            to={`/blogs/${b.slug}`}
-            className="block font-medium text-slate-700 hover:text-primary-600 transition"
-          >
-            {b.title}
-          </Link>
+              {recentBlogs.length === 0 ? (
+                <p className="text-slate-500 text-sm">No recent posts.</p>
+              ) : (
+                <ul className="space-y-4">
+                  {recentBlogs.map((b) => (
+                    <li key={b.id}>
+                      <Link
+                        to={`/blogs/${b.slug}`}
+                        className="block font-medium text-slate-700 hover:text-primary-600 transition"
+                      >
+                        {b.title}
+                      </Link>
 
-          {b.createdAt && (
-            <div className="text-xs text-slate-400 mt-1">
-              {new Date(b.createdAt).toDateString()}
+                      {b.createdAt && (
+                        <div className="text-xs text-slate-400 mt-1">
+                          {new Date(b.createdAt).toDateString()}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          )}
-        </li>
-      ))}
-    </ul>
-  )}
-</div>
 
             <div className="bg-slate-50 p-6 rounded-xl border">
               <h3 className="font-bold text-lg mb-4">Comments</h3>
-              <p className="text-slate-500 text-sm">
-                No comments yet.
-              </p>
+              <p className="text-slate-500 text-sm">No comments yet.</p>
             </div>
           </aside>
         </div>
