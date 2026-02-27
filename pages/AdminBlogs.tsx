@@ -212,7 +212,7 @@ const parseSectionsFromContent = (content: string): ContentSection[] => {
 
 const parseStructuredSectionsFromContent = (value: unknown): ContentSection[] => {
   const sections = extractSectionsFromUnknown(value);
-  return sections.filter((section) => section.image || section.text);
+  return sections.filter((section) => section.image || section.text || section.heading);
 };
 
 const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[] => {
@@ -241,6 +241,10 @@ const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[]
     ImageUrl?: unknown;
     image?: unknown;
     Image?: unknown;
+    altText?: unknown;
+    AltText?: unknown;
+    heading?: unknown;
+    Heading?: unknown;
     text?: unknown;
     Text?: unknown;
     content?: unknown;
@@ -261,6 +265,14 @@ const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[]
     (typeof obj.image === "string" && obj.image.trim()) ||
     (typeof obj.Image === "string" && obj.Image.trim()) ||
     "";
+  const altText =
+    (typeof obj.altText === "string" && obj.altText.trim()) ||
+    (typeof obj.AltText === "string" && obj.AltText.trim()) ||
+    "";
+  const heading =
+    (typeof obj.heading === "string" && obj.heading.trim()) ||
+    (typeof obj.Heading === "string" && obj.Heading.trim()) ||
+    "";
   const rawText =
     obj.text ??
     obj.Text ??
@@ -275,14 +287,14 @@ const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[]
   const nestedFromText = text ? extractSectionsFromUnknown(text, depth + 1) : [];
   if (nestedFromText.length > 0) return nestedFromText;
 
-  if (!image && !text) return [];
+  if (!image && !text && !heading) return [];
 
   return [
     {
       id: crypto.randomUUID(),
       image,
-      altText: "",
-      heading: "",
+      altText,
+      heading,
       text,
       imageFile: null,
     },
@@ -1105,7 +1117,6 @@ const buildStructuredBlogPayload = async (resolvedSlug: string) => {
       editorMode === "sections"
         ? buildContentFromSections(contentSections).trim()
         : draft.content.trim();
-    const extractedSections = parseSectionsFromContent(bodyMarkdown);
     const sections = contentSections
       .map((section) => ({
         imageUrl: String(section.image ?? "").trim(),
@@ -1146,11 +1157,11 @@ ogImage: draft.ogImage?.trim() || featuredImage,
       editorMode === "sections"
         ? buildContentFromSections(contentSections).trim()
         : draft.content.trim();
-    const extractedSections = parseSectionsFromContent(bodyMarkdown);
-    const sections = extractedSections
-      .map((section, index) => ({
+    const sections = contentSections
+      .map((section) => ({
         imageUrl: String(section.image ?? "").trim(),
-        heading: `Section ${index + 1}`,
+        altText: String(section.altText ?? "").trim(),
+        heading: String(section.heading ?? "").trim(),
         text: String(section.text ?? "").trim(),
       }))
       .filter((section) => section.imageUrl || section.text);

@@ -219,13 +219,32 @@ export const BlogDetails = () => {
       if (Array.isArray(objectContent.sections)) {
         const rawSections = objectContent.sections
           .map((entry) => {
-            const section = (entry ?? {}) as { imageUrl?: unknown; text?: unknown };
+            const section = (entry ?? {}) as {
+              imageUrl?: unknown;
+              image?: unknown;
+              altText?: unknown;
+              AltText?: unknown;
+              heading?: unknown;
+              Heading?: unknown;
+              text?: unknown;
+            };
             return {
-              image: typeof section.imageUrl === "string" ? section.imageUrl.trim() : "",
+              image:
+                (typeof section.imageUrl === "string" && section.imageUrl.trim()) ||
+                (typeof section.image === "string" && section.image.trim()) ||
+                "",
+              altText:
+                (typeof section.altText === "string" && section.altText.trim()) ||
+                (typeof section.AltText === "string" && section.AltText.trim()) ||
+                "",
+              heading:
+                (typeof section.heading === "string" && section.heading.trim()) ||
+                (typeof section.Heading === "string" && section.Heading.trim()) ||
+                "",
               text: typeof section.text === "string" ? section.text.trim() : "",
             };
           })
-          .filter((section) => section.image || section.text);
+          .filter((section) => section.image || section.text || section.heading);
 
         const compactSections = rawSections.reduce<typeof rawSections>((acc, section) => {
           const previous = acc[acc.length - 1];
@@ -255,7 +274,11 @@ export const BlogDetails = () => {
         const sectionMarkdown = compactSections
           .map((section) => {
             const parts: string[] = [];
-            if (section.image) parts.push(`![Section image](${section.image})`);
+            if (section.heading) parts.push(`## ${section.heading}`);
+            if (section.image) {
+              const imageAlt = section.altText || section.heading || "Section image";
+              parts.push(`![${imageAlt}](${section.image})`);
+            }
             if (section.text) parts.push(section.text);
             return parts.join("\n\n");
           })
