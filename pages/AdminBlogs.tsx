@@ -23,6 +23,7 @@ import {
 const API_BASE = "https://admin.urest.in:8089/api/blogs";
 const DEFAULT_BLOG_IMAGE =
   "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80";
+const MAX_META_DESCRIPTION_WORDS = 200;
 const FONT_OPTIONS = ["Arial", "Candara", "Times New Roman", "Georgia", "Verdana"];
 const FONT_SIZE_OPTIONS = [11, 12, 14, 16, 18, 20, 21, 22, 24, 26, 28, 30, 32];
 const EMOJIS = ["😀", "😁", "😂", "😊", "😍", "🤔", "🔥", "🚀", "💡", "✅", "📌", "🩺", "❤️", "🎉"];
@@ -213,6 +214,12 @@ const parseSectionsFromContent = (content: string): ContentSection[] => {
 const parseStructuredSectionsFromContent = (value: unknown): ContentSection[] => {
   const sections = extractSectionsFromUnknown(value);
   return sections.filter((section) => section.image || section.text || section.heading);
+};
+
+const truncateWords = (value: string, maxWords: number) => {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return value;
+  return words.slice(0, maxWords).join(" ");
 };
 
 const extractSectionsFromUnknown = (value: unknown, depth = 0): ContentSection[] => {
@@ -1134,7 +1141,7 @@ const buildStructuredBlogPayload = async (resolvedSlug: string) => {
 
   // ✅ ADD THESE 4 LINES
  metaTitle: draft.metaTitle?.trim() || draft.title.trim(),
-metaDescription: draft.metaDescription?.trim() || "",
+ metaDescription: truncateWords(draft.metaDescription?.trim() || "", MAX_META_DESCRIPTION_WORDS),
 metaKeywords: normalizedMetaKeywords,
 canonicalUrl: draft.canonicalUrl?.trim() || "",
 ogImage: draft.ogImage?.trim() || featuredImage,
@@ -1180,7 +1187,7 @@ ogImage: draft.ogImage?.trim() || featuredImage,
 
   // ✅ ADD THESE 4 LINES
   metaTitle: draft.metaTitle?.trim() || draft.title.trim(),
-  metaDescription: draft.metaDescription?.trim() || "",
+  metaDescription: truncateWords(draft.metaDescription?.trim() || "", MAX_META_DESCRIPTION_WORDS),
   metaKeywords: normalizedMetaKeywords,
   canonicalUrl: draft.canonicalUrl?.trim() || "",
   ogImage: draft.ogImage?.trim() || featuredImage,
@@ -1880,16 +1887,19 @@ ogImage: draft.ogImage?.trim() || featuredImage,
 
       <textarea
         value={draft.metaDescription || ""}
-        maxLength={160}
         onChange={(e) =>
           setDraft((prev) => ({
             ...prev,
-            metaDescription: e.target.value,
+            metaDescription: truncateWords(e.target.value, MAX_META_DESCRIPTION_WORDS),
           }))
         }
-        placeholder="Meta Description (150-160 chars)"
+        placeholder="Meta Description (up to 200 words)"
         className="mb-3 w-full rounded border border-slate-300 px-3 py-2 text-sm"
       />
+      <div className="mb-3 text-xs text-slate-500">
+        {(draft.metaDescription || "").trim().split(/\s+/).filter(Boolean).length}/
+        {MAX_META_DESCRIPTION_WORDS} words
+      </div>
 
       <input
   value={draft.metaKeywords}
