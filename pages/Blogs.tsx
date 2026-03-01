@@ -31,13 +31,97 @@ const formatDate = (date?: string) =>
       })
     : "Recently published";
 
-const excerpt = (text?: string, len = 110) =>
+const decodeContentToText = (value: unknown): string => {
+  if (value == null) return "";
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    try {
+      const parsed = JSON.parse(trimmed);
+      return decodeContentToText(parsed);
+    } catch {
+      return trimmed;
+    }
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => decodeContentToText(entry)).join(" ").trim();
+  }
+
+  if (typeof value !== "object") {
+    return String(value);
+  }
+
+  const obj = value as {
+    content?: unknown;
+    Content?: unknown;
+    body?: unknown;
+    Body?: unknown;
+    text?: unknown;
+    markdown?: unknown;
+    value?: unknown;
+    sections?: unknown;
+    Sections?: unknown;
+  };
+
+  const sections = obj.sections ?? obj.Sections;
+  if (Array.isArray(sections)) {
+    const sectionText = sections
+      .map((entry) => {
+        const section = (entry ?? {}) as {
+          heading?: unknown;
+          Heading?: unknown;
+          text?: unknown;
+          Text?: unknown;
+        };
+
+        const heading =
+          (typeof section.heading === "string" && section.heading) ||
+          (typeof section.Heading === "string" && section.Heading) ||
+          "";
+        const text =
+          (typeof section.text === "string" && section.text) ||
+          (typeof section.Text === "string" && section.Text) ||
+          "";
+
+        return `${heading} ${text}`.trim();
+      })
+      .filter(Boolean)
+      .join(" ");
+
+    if (sectionText) return sectionText;
+  }
+
+  const candidate =
+    obj.content ??
+    obj.Content ??
+    obj.body ??
+    obj.Body ??
+    obj.text ??
+    obj.markdown ??
+    obj.value;
+
+  return decodeContentToText(candidate);
+};
+
+const cleanPreviewText = (text: string) =>
   text
-    ?.replace(/<[^>]*>/g, "")
-    ?.replace(/\s+/g, " ")
-    ?.trim()
-    ?.slice(0, len) + "..." ||
-  "Read this article to learn practical growth insights.";
+    .replace(/<[^>]*>/g, " ")
+    .replace(/!\[[^\]]*]\([^)]+\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[#*_`>-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const excerpt = (text?: string, len = 110) => {
+  const cleaned = cleanPreviewText(text || "");
+  if (!cleaned) return "Read this article to learn practical growth insights.";
+  if (cleaned.length <= len) return cleaned;
+  const short = cleaned.slice(0, len);
+  const splitAt = short.lastIndexOf(" ");
+  return `${short.slice(0, splitAt > 0 ? splitAt : len)}...`;
+};
 
 const normalize = (item: any, i: number): Blog => {
   const title = item?.title || item?.Title || "Untitled";
@@ -57,7 +141,7 @@ const normalize = (item: any, i: number): Blog => {
       item?.Excerpt ||
       item?.summary ||
       item?.description,
-    content: item?.content || item?.Content || item?.body,
+    content: decodeContentToText(item?.content || item?.Content || item?.body || item?.Body),
     createdAt: item?.createdAt || item?.CreatedAt,
   };
 };
