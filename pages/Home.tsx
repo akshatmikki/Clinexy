@@ -132,283 +132,283 @@ export const Home: React.FC = () => {
     }
   ];
 
- interface Blog {
-  id: string;
-  title: string;
-  slug: string;
-  content?: unknown;
-  excerpt?: string;
-  featuredImage: string;
-  authorName: string;
-  tags: string[];
-  views: number;
-  likes: number;
-  createdAt?: string;
-}
+  interface Blog {
+    id: string;
+    title: string;
+    slug: string;
+    content?: unknown;
+    excerpt?: string;
+    featuredImage: string;
+    authorName: string;
+    tags: string[];
+    views: number;
+    likes: number;
+    createdAt?: string;
+  }
 
-const [blogs, setBlogs] = useState<Blog[]>([]);
-const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
 
 
-useEffect(() => {
-  const fetchBlogs = async () => {
-    try {
-      const res = await fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs");
-      if (!res.ok) return;
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const res = await fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs");
+        if (!res.ok) return;
 
-      const data = await res.json();
-      const rawBlogs: unknown[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.blogs)
-          ? data.blogs
-        : Array.isArray(data?.content)
-          ? data.content
-          : Array.isArray(data?.data)
-            ? data.data
-            : [];
+        const data = await res.json();
+        const rawBlogs: unknown[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.blogs)
+            ? data.blogs
+            : Array.isArray(data?.content)
+              ? data.content
+              : Array.isArray(data?.data)
+                ? data.data
+                : [];
 
-      const normalizedBlogs: Blog[] = rawBlogs.map((item, index) => {
-        const blog = (item ?? {}) as {
-          id?: unknown;
-          Id?: unknown;
-          title?: unknown;
-          Title?: unknown;
-          slug?: unknown;
-          Slug?: unknown;
+        const normalizedBlogs: Blog[] = rawBlogs.map((item, index) => {
+          const blog = (item ?? {}) as {
+            id?: unknown;
+            Id?: unknown;
+            title?: unknown;
+            Title?: unknown;
+            slug?: unknown;
+            Slug?: unknown;
+            content?: unknown;
+            Content?: unknown;
+            body?: unknown;
+            Body?: unknown;
+            excerpt?: unknown;
+            Excerpt?: unknown;
+            summary?: unknown;
+            Summary?: unknown;
+            description?: unknown;
+            Description?: unknown;
+            featuredImage?: unknown;
+            FeaturedImage?: unknown;
+            authorName?: unknown;
+            AuthorName?: unknown;
+            tags?: unknown;
+            Tags?: unknown;
+            views?: unknown;
+            Views?: unknown;
+            likes?: unknown;
+            Likes?: unknown;
+            createdAt?: unknown;
+            CreatedAt?: unknown;
+          };
+
+          const title =
+            (typeof blog.title === "string" && blog.title) ||
+            (typeof blog.Title === "string" && blog.Title) ||
+            "Untitled";
+          const slug =
+            (typeof blog.slug === "string" && blog.slug) ||
+            (typeof blog.Slug === "string" && blog.Slug) ||
+            title.toLowerCase().replace(/\s+/g, "-");
+
+          return {
+            id: String(blog.id ?? blog.Id ?? index),
+            title,
+            slug,
+            content: blog.content ?? blog.Content ?? blog.body ?? blog.Body ?? undefined,
+            excerpt:
+              (typeof blog.excerpt === "string" && blog.excerpt) ||
+              (typeof blog.Excerpt === "string" && blog.Excerpt) ||
+              (typeof blog.summary === "string" && blog.summary) ||
+              (typeof blog.Summary === "string" && blog.Summary) ||
+              (typeof blog.description === "string" && blog.description) ||
+              (typeof blog.Description === "string" && blog.Description) ||
+              undefined,
+            featuredImage:
+              (typeof blog.featuredImage === "string" && blog.featuredImage) ||
+              (typeof blog.FeaturedImage === "string" && blog.FeaturedImage) ||
+              "",
+            authorName:
+              (typeof blog.authorName === "string" && blog.authorName) ||
+              (typeof blog.AuthorName === "string" && blog.AuthorName) ||
+              "Clinexy Team",
+            tags: Array.isArray(blog.tags)
+              ? blog.tags.map(String)
+              : Array.isArray(blog.Tags)
+                ? blog.Tags.map(String)
+                : [],
+            views: Number(blog.views ?? blog.Views ?? 0),
+            likes: Number(blog.likes ?? blog.Likes ?? 0),
+            createdAt:
+              (typeof blog.createdAt === "string" && blog.createdAt) ||
+              (typeof blog.CreatedAt === "string" && blog.CreatedAt) ||
+              undefined,
+          };
+        });
+
+        const hydratedBlogs = await Promise.all(
+          normalizedBlogs.map(async (blog) => {
+            if ((blog.content || blog.excerpt) || !blog.slug) {
+              return blog;
+            }
+
+            try {
+              const detailRes = await fetch(
+                `https://admin.urest.in:8089/api/blogs/${encodeURIComponent(blog.slug)}`
+              );
+              if (!detailRes.ok) return blog;
+
+              const detail = await detailRes.json();
+              const detailBlog = detail as {
+                content?: unknown;
+                Content?: unknown;
+                body?: unknown;
+                Body?: unknown;
+                excerpt?: unknown;
+                Excerpt?: unknown;
+                summary?: unknown;
+                Summary?: unknown;
+                description?: unknown;
+                Description?: unknown;
+              };
+
+              return {
+                ...blog,
+                content:
+                  detailBlog.content ??
+                  detailBlog.Content ??
+                  detailBlog.body ??
+                  detailBlog.Body ??
+                  blog.content,
+                excerpt:
+                  (typeof detailBlog.excerpt === "string" && detailBlog.excerpt) ||
+                  (typeof detailBlog.Excerpt === "string" && detailBlog.Excerpt) ||
+                  (typeof detailBlog.summary === "string" && detailBlog.summary) ||
+                  (typeof detailBlog.Summary === "string" && detailBlog.Summary) ||
+                  (typeof detailBlog.description === "string" && detailBlog.description) ||
+                  (typeof detailBlog.Description === "string" && detailBlog.Description) ||
+                  blog.excerpt,
+              };
+            } catch {
+              return blog;
+            }
+          })
+        );
+
+        setBlogs(hydratedBlogs);
+      } catch (err) {
+        console.error("Failed to fetch blogs");
+      } finally {
+        setLoadingBlogs(false);
+      }
+    };
+
+    fetchBlogs();
+  }, []);
+
+  const getExcerpt = (content: unknown, length = 140) => {
+    const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ");
+    const stripMarkdownImages = (value: string) =>
+      value.replace(/!\[[^\]]*]\((?:[^()\\]|\\.)*\)/g, " ");
+    const stripMarkdownLinks = (value: string) =>
+      value.replace(/\[([^\]]+)]\((?:[^()\\]|\\.)*\)/g, "$1");
+    const stripMarkdownDecorators = (value: string) => value.replace(/[#!*\-`>]/g, "");
+    const sanitizeText = (value: string) =>
+      stripMarkdownDecorators(stripMarkdownLinks(stripMarkdownImages(stripHtml(value))));
+    const trimWithEllipsis = (value: string) => {
+      const normalized = value.replace(/\s+/g, " ").trim();
+      if (!normalized) return "";
+      return normalized.length > length
+        ? `${normalized.slice(0, length).trim()}...`
+        : normalized;
+    };
+
+    const decodeValue = (value: unknown, depth = 0): string => {
+      if (depth > 8 || value == null) return "";
+
+      if (typeof value === "string") {
+        const normalized = value.trim();
+        if (!normalized) return "";
+        try {
+          return decodeValue(JSON.parse(normalized), depth + 1);
+        } catch {
+          return normalized;
+        }
+      }
+
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => decodeValue(item, depth + 1))
+          .filter(Boolean)
+          .join(" ");
+      }
+
+      if (typeof value === "object") {
+        const obj = value as {
+          type?: unknown;
+          sections?: unknown;
           content?: unknown;
           Content?: unknown;
           body?: unknown;
           Body?: unknown;
+          markdown?: unknown;
+          Markdown?: unknown;
+          text?: unknown;
+          Text?: unknown;
+          value?: unknown;
+          Value?: unknown;
           excerpt?: unknown;
           Excerpt?: unknown;
           summary?: unknown;
           Summary?: unknown;
           description?: unknown;
           Description?: unknown;
-          featuredImage?: unknown;
-          FeaturedImage?: unknown;
-          authorName?: unknown;
-          AuthorName?: unknown;
-          tags?: unknown;
-          Tags?: unknown;
-          views?: unknown;
-          Views?: unknown;
-          likes?: unknown;
-          Likes?: unknown;
-          createdAt?: unknown;
-          CreatedAt?: unknown;
         };
 
-        const title =
-          (typeof blog.title === "string" && blog.title) ||
-          (typeof blog.Title === "string" && blog.Title) ||
-          "Untitled";
-        const slug =
-          (typeof blog.slug === "string" && blog.slug) ||
-          (typeof blog.Slug === "string" && blog.Slug) ||
-          title.toLowerCase().replace(/\s+/g, "-");
+        if (Array.isArray(obj.sections)) {
+          const sectionText = obj.sections
+            .map((section) => {
+              const sectionObj = (section ?? {}) as {
+                text?: unknown;
+              };
+              return typeof sectionObj.text === "string"
+                ? sectionObj.text.trim()
+                : decodeValue(section, depth + 1).trim();
+            })
+            .filter(Boolean)
+            .filter((text, index, array) =>
+              index === 0 ? true : text.toLowerCase() !== array[index - 1].toLowerCase()
+            )
+            .join(" ");
+          if (sectionText) return sectionText;
+        }
 
-        return {
-          id: String(blog.id ?? blog.Id ?? index),
-          title,
-          slug,
-          content: blog.content ?? blog.Content ?? blog.body ?? blog.Body ?? undefined,
-          excerpt:
-            (typeof blog.excerpt === "string" && blog.excerpt) ||
-            (typeof blog.Excerpt === "string" && blog.Excerpt) ||
-            (typeof blog.summary === "string" && blog.summary) ||
-            (typeof blog.Summary === "string" && blog.Summary) ||
-            (typeof blog.description === "string" && blog.description) ||
-            (typeof blog.Description === "string" && blog.Description) ||
-            undefined,
-          featuredImage:
-            (typeof blog.featuredImage === "string" && blog.featuredImage) ||
-            (typeof blog.FeaturedImage === "string" && blog.FeaturedImage) ||
-            "",
-          authorName:
-            (typeof blog.authorName === "string" && blog.authorName) ||
-            (typeof blog.AuthorName === "string" && blog.AuthorName) ||
-            "Clinexy Team",
-          tags: Array.isArray(blog.tags)
-            ? blog.tags.map(String)
-            : Array.isArray(blog.Tags)
-              ? blog.Tags.map(String)
-              : [],
-          views: Number(blog.views ?? blog.Views ?? 0),
-          likes: Number(blog.likes ?? blog.Likes ?? 0),
-          createdAt:
-            (typeof blog.createdAt === "string" && blog.createdAt) ||
-            (typeof blog.CreatedAt === "string" && blog.CreatedAt) ||
-            undefined,
-        };
-      });
+        const candidate =
+          obj.content ??
+          obj.Content ??
+          obj.body ??
+          obj.Body ??
+          obj.markdown ??
+          obj.Markdown ??
+          obj.text ??
+          obj.Text ??
+          obj.value ??
+          obj.Value ??
+          obj.excerpt ??
+          obj.Excerpt ??
+          obj.summary ??
+          obj.Summary ??
+          obj.description ??
+          obj.Description;
 
-      const hydratedBlogs = await Promise.all(
-        normalizedBlogs.map(async (blog) => {
-          if ((blog.content || blog.excerpt) || !blog.slug) {
-            return blog;
-          }
-
-          try {
-            const detailRes = await fetch(
-              `https://admin.urest.in:8089/api/blogs/${encodeURIComponent(blog.slug)}`
-            );
-            if (!detailRes.ok) return blog;
-
-            const detail = await detailRes.json();
-            const detailBlog = detail as {
-              content?: unknown;
-              Content?: unknown;
-              body?: unknown;
-              Body?: unknown;
-              excerpt?: unknown;
-              Excerpt?: unknown;
-              summary?: unknown;
-              Summary?: unknown;
-              description?: unknown;
-              Description?: unknown;
-            };
-
-            return {
-              ...blog,
-              content:
-                detailBlog.content ??
-                detailBlog.Content ??
-                detailBlog.body ??
-                detailBlog.Body ??
-                blog.content,
-              excerpt:
-                (typeof detailBlog.excerpt === "string" && detailBlog.excerpt) ||
-                (typeof detailBlog.Excerpt === "string" && detailBlog.Excerpt) ||
-                (typeof detailBlog.summary === "string" && detailBlog.summary) ||
-                (typeof detailBlog.Summary === "string" && detailBlog.Summary) ||
-                (typeof detailBlog.description === "string" && detailBlog.description) ||
-                (typeof detailBlog.Description === "string" && detailBlog.Description) ||
-                blog.excerpt,
-            };
-          } catch {
-            return blog;
-          }
-        })
-      );
-
-      setBlogs(hydratedBlogs);
-    } catch (err) {
-      console.error("Failed to fetch blogs");
-    } finally {
-      setLoadingBlogs(false);
-    }
-  };
-
-  fetchBlogs();
-}, []);
-
-const getExcerpt = (content: unknown, length = 140) => {
-  const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ");
-  const stripMarkdownImages = (value: string) =>
-    value.replace(/!\[[^\]]*]\((?:[^()\\]|\\.)*\)/g, " ");
-  const stripMarkdownLinks = (value: string) =>
-    value.replace(/\[([^\]]+)]\((?:[^()\\]|\\.)*\)/g, "$1");
-  const stripMarkdownDecorators = (value: string) => value.replace(/[#!*\-`>]/g, "");
-  const sanitizeText = (value: string) =>
-    stripMarkdownDecorators(stripMarkdownLinks(stripMarkdownImages(stripHtml(value))));
-  const trimWithEllipsis = (value: string) => {
-    const normalized = value.replace(/\s+/g, " ").trim();
-    if (!normalized) return "";
-    return normalized.length > length
-      ? `${normalized.slice(0, length).trim()}...`
-      : normalized;
-  };
-
-  const decodeValue = (value: unknown, depth = 0): string => {
-    if (depth > 8 || value == null) return "";
-
-    if (typeof value === "string") {
-      const normalized = value.trim();
-      if (!normalized) return "";
-      try {
-        return decodeValue(JSON.parse(normalized), depth + 1);
-      } catch {
-        return normalized;
-      }
-    }
-
-    if (Array.isArray(value)) {
-      return value
-        .map((item) => decodeValue(item, depth + 1))
-        .filter(Boolean)
-        .join(" ");
-    }
-
-    if (typeof value === "object") {
-      const obj = value as {
-        type?: unknown;
-        sections?: unknown;
-        content?: unknown;
-        Content?: unknown;
-        body?: unknown;
-        Body?: unknown;
-        markdown?: unknown;
-        Markdown?: unknown;
-        text?: unknown;
-        Text?: unknown;
-        value?: unknown;
-        Value?: unknown;
-        excerpt?: unknown;
-        Excerpt?: unknown;
-        summary?: unknown;
-        Summary?: unknown;
-        description?: unknown;
-        Description?: unknown;
-      };
-
-      if (Array.isArray(obj.sections)) {
-        const sectionText = obj.sections
-          .map((section) => {
-            const sectionObj = (section ?? {}) as {
-              text?: unknown;
-            };
-            return typeof sectionObj.text === "string"
-              ? sectionObj.text.trim()
-              : decodeValue(section, depth + 1).trim();
-          })
-          .filter(Boolean)
-          .filter((text, index, array) =>
-            index === 0 ? true : text.toLowerCase() !== array[index - 1].toLowerCase()
-          )
-          .join(" ");
-        if (sectionText) return sectionText;
+        if (candidate !== undefined) {
+          return decodeValue(candidate, depth + 1);
+        }
       }
 
-      const candidate =
-        obj.content ??
-        obj.Content ??
-        obj.body ??
-        obj.Body ??
-        obj.markdown ??
-        obj.Markdown ??
-        obj.text ??
-        obj.Text ??
-        obj.value ??
-        obj.Value ??
-        obj.excerpt ??
-        obj.Excerpt ??
-        obj.summary ??
-        obj.Summary ??
-        obj.description ??
-        obj.Description;
+      return "";
+    };
 
-      if (candidate !== undefined) {
-        return decodeValue(candidate, depth + 1);
-      }
-    }
-
-    return "";
+    const decodedText = decodeValue(content);
+    return trimWithEllipsis(sanitizeText(decodedText));
   };
-
-  const decodedText = decodeValue(content);
-  return trimWithEllipsis(sanitizeText(decodedText));
-};
 
   const scrollToHowItWorks = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -806,10 +806,22 @@ const getExcerpt = (content: unknown, length = 140) => {
         <div className="absolute top-0 right-0 w-[60%] h-full bg-slate-50 rotate-[-6deg] translate-x-1/4 -z-10" />
 
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-20">
+          <div className="flex items-center justify-between mb-14">
+            {/* Left Side - Title */}
             <h2 className="text-4xl font-bold text-slate-900">
               Our <span className="text-primary-600">Blogs</span>
             </h2>
+
+            {/* Right Side - CTA */}
+            <Link
+              to="/blogs"
+              className="group inline-flex items-center gap-2 text-primary-600 font-semibold transition-all duration-300 hover:gap-3"
+            >
+              Explore more blogs
+              <span className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
           </div>
 
           <div className="text-center pb-4">
