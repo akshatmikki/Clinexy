@@ -717,11 +717,11 @@ export const Home: React.FC = () => {
             ) : blogs.length === 0 ? (
               <p className="text-center text-slate-500">No blogs found.</p>
             ) : (
-              <div className="flex snap-x snap-mandatory justify-center gap-6">
-                {blogs.slice(0, 3).map((blog) => (
+              <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {blogs.slice(0, 6).map((blog) => (
                   <div
                     key={blog.id}
-                    className="group flex h-full w-[320px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl md:w-[360px]"
+                    className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                   >
                     {/* Image */}
                     <div className="relative h-56 overflow-hidden">
