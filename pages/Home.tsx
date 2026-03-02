@@ -154,7 +154,7 @@ export const Home: React.FC = () => {
     const fetchTopBlogs = async () => {
       try {
         const res = await fetch(
-          "https://clinexy.in/wp-json/wp/v2/posts?_embed&per_page=3&orderby=date&order=desc"
+          "https://clinexy.in/wp-json/wp/v2/posts?_embed&orderby=date&order=desc"
         );
 
         if (!res.ok) throw new Error("Failed to fetch blogs");
