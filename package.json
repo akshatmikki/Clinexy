@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@syncfusion/ej2-react-documenteditor": "^32.2.4",
+    "@tailwindcss/typography": "^0.5.19",
     "lucide-react": "0.292.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

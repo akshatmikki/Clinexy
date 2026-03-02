@@ -23,6 +23,7 @@ import { BlogDetails } from './pages/BlogDetails';
 import Blogs from "./pages/Blogs";
 import AdminBlogs from "./pages/AdminBlogs";
 import AdminLogin from "./pages/AdminLogin";
+import IframeEmbed from './pages/Iframe';
 
 const ADMIN_AUTH_KEY = "clinexy_admin_auth";
 
@@ -185,6 +186,7 @@ const App: React.FC = () => {
           <Routes>
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
+            <Route path="/iframe" element={<IframeEmbed />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />

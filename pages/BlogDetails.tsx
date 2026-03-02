@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Users, MessageSquare, Calendar } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 import { Helmet } from "react-helmet-async";
 
 const DEFAULT_BLOG_IMAGE =
   "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80";
+
+interface CommentType {
+  id: number;
+  author: string;
+  content: string;
+  date: string;
+}
 
 interface Blog {
   id: string;
@@ -16,12 +20,12 @@ interface Blog {
   content: string;
   featuredImage: string;
   authorName: string;
-  category?: string;
+  categories: string[];
   tags: string[];
+  comments: CommentType[];
   createdAt?: string;
   metaTitle?: string;
   metaDescription?: string;
-  metaKeywords?: string;
   canonicalUrl?: string;
   ogImage?: string;
 }
@@ -31,145 +35,83 @@ export const BlogDetails = () => {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [recentBlogs, setRecentBlogs] = useState<Blog[]>([]);
-  const [activeImage, setActiveImage] = useState<{ src: string; alt: string } | null>(null);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
 
-  const normalizeBlog = (item: unknown, index: number): Blog => {
-    const raw = (item ?? {}) as {
-      id?: unknown;
-      Id?: unknown;
-      title?: unknown;
-      Title?: unknown;
-      slug?: unknown;
-      Slug?: unknown;
-      content?: unknown;
-      Content?: unknown;
-      featuredImage?: unknown;
-      FeaturedImage?: unknown;
-      authorName?: unknown;
-      AuthorName?: unknown;
-      tags?: unknown;
-      Tags?: unknown;
-      createdAt?: unknown;
-      CreatedAt?: unknown;
-      metaTitle?: unknown;
-      MetaTitle?: unknown;
-      metaDescription?: unknown;
-      MetaDescription?: unknown;
-      metaKeywords?: unknown;
-      MetaKeywords?: unknown;
-      canonicalUrl?: unknown;
-      CanonicalUrl?: unknown;
-      ogImage?: unknown;
-      OgImage?: unknown;
-      OpenGraphImage?: unknown;
-    };
+  const preserveLineBreakSpacing = (html: string) => {
+    if (!html) return "";
 
-    const title =
-      (typeof raw.title === "string" && raw.title) ||
-      (typeof raw.Title === "string" && raw.Title) ||
-      "Untitled";
-    const slugValue =
-      (typeof raw.slug === "string" && raw.slug) ||
-      (typeof raw.Slug === "string" && raw.Slug) ||
-      title.toLowerCase().replace(/\s+/g, "-");
-
-    return {
-      id: String(raw.id ?? raw.Id ?? index),
-      title,
-      slug: slugValue,
-      content:
-        (typeof raw.content === "string" && raw.content) ||
-        (typeof raw.Content === "string" && raw.Content) ||
-        "",
-      featuredImage:
-        (typeof raw.featuredImage === "string" && raw.featuredImage) ||
-        (typeof raw.FeaturedImage === "string" && raw.FeaturedImage) ||
-        DEFAULT_BLOG_IMAGE,
-      authorName:
-        (typeof raw.authorName === "string" && raw.authorName) ||
-        (typeof raw.AuthorName === "string" && raw.AuthorName) ||
-        "Clinexy Team",
-      tags: Array.isArray(raw.tags)
-        ? raw.tags.map(String)
-        : Array.isArray(raw.Tags)
-          ? raw.Tags.map(String)
-          : [],
-      createdAt:
-        (typeof raw.createdAt === "string" && raw.createdAt) ||
-        (typeof raw.CreatedAt === "string" && raw.CreatedAt) ||
-        undefined,
-      metaTitle:
-        (typeof raw.metaTitle === "string" && raw.metaTitle) ||
-        (typeof raw.MetaTitle === "string" && raw.MetaTitle) ||
-        undefined,
-      metaDescription:
-        (typeof raw.metaDescription === "string" && raw.metaDescription) ||
-        (typeof raw.MetaDescription === "string" && raw.MetaDescription) ||
-        undefined,
-      metaKeywords:
-        (typeof raw.metaKeywords === "string" && raw.metaKeywords) ||
-        (typeof raw.MetaKeywords === "string" && raw.MetaKeywords) ||
-        undefined,
-      canonicalUrl:
-        (typeof raw.canonicalUrl === "string" && raw.canonicalUrl) ||
-        (typeof raw.CanonicalUrl === "string" && raw.CanonicalUrl) ||
-        undefined,
-      ogImage:
-        (typeof raw.ogImage === "string" && raw.ogImage) ||
-        (typeof raw.OgImage === "string" && raw.OgImage) ||
-        (typeof raw.OpenGraphImage === "string" && raw.OpenGraphImage) ||
-        undefined,
-    };
+    return html.replace(/([^>])\n+/g, (match, prevChar) => {
+      const lineBreaks = match.length - 1; // minus the captured character
+      const breaks = lineBreaks === 1 ? "<br/>" : "<br/>";
+      return prevChar + breaks;
+    });
   };
-
-  useEffect(() => {
-    const fetchRecentBlogs = async () => {
-      try {
-        const res = await fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs");
-        if (!res.ok) return;
-
-        const response = await res.json();
-        const list: unknown[] = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.blogs)
-            ? response.blogs
-            : Array.isArray(response?.data)
-              ? response.data
-              : Array.isArray(response?.content)
-                ? response.content
-                : [];
-
-        const normalized = list.map((entry, idx) => normalizeBlog(entry, idx));
-
-        const filtered = normalized
-          .filter((b) => b.slug !== slug)
-          .sort((a, b) => {
-            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return bTime - aTime;
-          })
-          .slice(0, 5);
-
-        setRecentBlogs(filtered);
-      } catch (err) {
-        console.error("Failed to load recent blogs", err);
-      }
-    };
-
-    fetchRecentBlogs();
-  }, [slug]);
 
   useEffect(() => {
     if (!slug) return;
 
     const fetchBlog = async () => {
       try {
-        const res = await fetch(`https://admin.urest.in:8089/api/blogs/${slug}`);
+        const res = await fetch(
+          `https://clinexy.in/wp-json/wp/v2/posts?slug=5-nft-projects-you-should-learn-about`
+        );
+
         if (!res.ok) throw new Error("Blog not found");
 
         const data = await res.json();
-        setBlog(normalizeBlog(data, 0));
+        if (!data.length) throw new Error("Blog not found");
+
+        const post = data[0];
+
+        const authorName =
+          post._embedded?.author?.[0]?.name || "Clinexy Team";
+
+        const categories =
+          post._embedded?.["wp:term"]?.[0]?.map((cat: any) => cat.name) || [];
+
+        const tags =
+          post._embedded?.["wp:term"]?.[1]?.map((tag: any) => tag.name) || [];
+
+        const featuredImage =
+          post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+          DEFAULT_BLOG_IMAGE;
+
+        const commentsRes = await fetch(
+          `https://clinexy.in/wp-json/wp/v2/comments?post=${post.id}`
+        );
+        const commentsData = await commentsRes.json();
+
+        const comments = commentsData.map((c: any) => ({
+          id: c.id,
+          author: c.author_name,
+          content: c.content.rendered,
+          date: c.date,
+        }));
+
+        const aioseo = post?.aioseo_meta_data || post?.aioseo;
+
+        const normalizedBlog: Blog = {
+          id: String(post.id),
+          title: post.title?.rendered,
+          slug: post.slug,
+          content: post.content?.rendered,
+          featuredImage,
+          authorName,
+          categories,
+          tags,
+          comments,
+          createdAt: post.date,
+          metaTitle:
+            aioseo?.title || post.title?.rendered,
+          metaDescription:
+            aioseo?.description ||
+            post.excerpt?.rendered?.replace(/<[^>]+>/g, ""),
+          canonicalUrl: post.link,
+          ogImage:
+            aioseo?.og_image || featuredImage,
+        };
+
+        setBlog(normalizedBlog);
       } catch {
         setError("Blog not found");
       } finally {
@@ -180,451 +122,167 @@ export const BlogDetails = () => {
     fetchBlog();
   }, [slug]);
 
-  useEffect(() => {
-    if (!activeImage) return;
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setActiveImage(null);
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeImage]);
-
   if (loading) {
-    return <div className="py-40 text-center text-slate-500">Loading blog...</div>;
+    return <div className="py-40 text-center">Loading...</div>;
   }
 
   if (error || !blog) {
-    return <div className="py-40 text-center text-red-600">{error || "Blog not found"}</div>;
+    return (
+      <div className="py-40 text-center text-red-600">
+        {error || "Blog not found"}
+      </div>
+    );
   }
-
-  const decodeContent = (content: string) => {
-    const normalizeText = (value: string) => value.replace(/\r\n/g, "\n");
-
-    const extractFromObject = (parsed: unknown): string | null => {
-      if (!parsed || typeof parsed !== "object") return null;
-
-      const objectContent = parsed as {
-        content?: unknown;
-        markdown?: unknown;
-        text?: unknown;
-        body?: unknown;
-        value?: unknown;
-        sections?: unknown;
-      };
-
-      if (Array.isArray(objectContent.sections)) {
-        const rawSections = objectContent.sections
-          .map((entry) => {
-            const section = (entry ?? {}) as {
-              imageUrl?: unknown;
-              image?: unknown;
-              altText?: unknown;
-              AltText?: unknown;
-              heading?: unknown;
-              Heading?: unknown;
-              text?: unknown;
-            };
-            return {
-              image:
-                (typeof section.imageUrl === "string" && section.imageUrl.trim()) ||
-                (typeof section.image === "string" && section.image.trim()) ||
-                "",
-              altText:
-                (typeof section.altText === "string" && section.altText.trim()) ||
-                (typeof section.AltText === "string" && section.AltText.trim()) ||
-                "",
-              heading:
-                (typeof section.heading === "string" && section.heading.trim()) ||
-                (typeof section.Heading === "string" && section.Heading.trim()) ||
-                "",
-              text: typeof section.text === "string" ? section.text.trim() : "",
-            };
-          })
-          .filter((section) => section.image || section.text || section.heading);
-
-        const compactSections = rawSections.reduce<typeof rawSections>((acc, section) => {
-          const previous = acc[acc.length - 1];
-          if (!previous) {
-            acc.push(section);
-            return acc;
-          }
-
-          const sameText =
-            section.text &&
-            previous.text &&
-            section.text.toLowerCase() === previous.text.toLowerCase();
-
-          if (sameText) {
-            if (previous.image && !section.image) return acc;
-            if (!previous.image && section.image) {
-              acc[acc.length - 1] = section;
-              return acc;
-            }
-            if (previous.image === section.image) return acc;
-          }
-
-          acc.push(section);
-          return acc;
-        }, []);
-
-        const sectionMarkdown = compactSections
-          .map((section) => {
-            const parts: string[] = [];
-            if (section.heading) parts.push(`## ${section.heading}`);
-            if (section.image) {
-              const imageAlt = section.altText || section.heading || "Section image";
-              parts.push(`![${imageAlt}](${section.image})`);
-            }
-            if (section.text) parts.push(section.text);
-            return parts.join("\n\n");
-          })
-          .filter(Boolean)
-          .join("\n\n");
-
-        if (sectionMarkdown) return sectionMarkdown;
-      }
-
-      const candidate =
-        objectContent.content ??
-        objectContent.markdown ??
-        objectContent.text ??
-        objectContent.body ??
-        objectContent.value;
-
-      return typeof candidate === "string" ? candidate : null;
-    };
-
-    const decodeValue = (value: unknown, depth = 0): string => {
-      if (depth > 3) return typeof value === "string" ? value : "";
-
-      if (typeof value === "string") {
-        try {
-          const parsed = JSON.parse(value);
-          return decodeValue(parsed, depth + 1);
-        } catch {
-          return value;
-        }
-      }
-
-      const extracted = extractFromObject(value);
-      if (extracted) return decodeValue(extracted, depth + 1);
-
-      return "";
-    };
-
-    const decoded = decodeValue(content);
-    return normalizeText(decoded || content);
-  };
-
-  const markdownContent = decodeContent(blog.content);
-  const featuredImage = blog.featuredImage || DEFAULT_BLOG_IMAGE;
-  const siteOrigin = typeof window !== "undefined" ? window.location.origin : "https://clinexy.com";
-  const defaultCanonicalUrl = `${siteOrigin}/blogs/${blog.slug}`;
-  const canonicalHref = (() => {
-    const value = blog.canonicalUrl?.trim();
-    if (!value) return defaultCanonicalUrl;
-    try {
-      return new URL(value, siteOrigin).toString();
-    } catch {
-      return defaultCanonicalUrl;
-    }
-  })();
-  const plainTextContent = markdownContent
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, " ")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/[#*_`>~-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const seoTitle = blog.metaTitle?.trim() || blog.title;
-  const seoDescription = (blog.metaDescription?.trim() || plainTextContent).slice(0, 160);
-  const ogImage = blog.ogImage?.trim() || featuredImage;
-  const keywordsFromTags = (blog.tags || [])
-    .map((tag) => String(tag).trim())
-    .filter(Boolean)
-    .join(", ");
-  const seoKeywords = blog.metaKeywords?.trim() || keywordsFromTags;
-  const normalizedMarkdownContent = markdownContent
-    .replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, "")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/(^|[^*])\*(?!\s)(.+?)(?<!\s)\*(?!\*)/gm, "$1<em>$2</em>");
 
   return (
     <>
       <Helmet>
-        <title>{seoTitle}</title>
-        <meta name="description" content={seoDescription} />
-        <link rel="canonical" href={canonicalHref} />
-        {seoKeywords && <meta name="keywords" content={seoKeywords} />}
+        <title>{blog.metaTitle}</title>
+        <meta name="description" content={blog.metaDescription} />
+        <link rel="canonical" href={blog.canonicalUrl} />
+        <meta property="og:title" content={blog.metaTitle} />
+        <meta property="og:description" content={blog.metaDescription} />
+        <meta property="og:image" content={blog.ogImage} />
         <meta property="og:type" content="article" />
-        <meta property="og:title" content={seoTitle} />
-        <meta property="og:description" content={seoDescription} />
-        <meta property="og:image" content={ogImage} />
-        <meta property="og:url" content={canonicalHref} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={seoTitle} />
-        <meta name="twitter:description" content={seoDescription} />
-        <meta name="twitter:image" content={ogImage} />
       </Helmet>
 
+      {/* Hero */}
       <section
         className="h-[420px] bg-cover bg-center relative flex items-center justify-center"
-        style={{ backgroundImage: `url(${featuredImage})` }}
+        style={{ backgroundImage: `url(${blog.featuredImage})` }}
       >
         <div className="absolute inset-0 bg-black/60" />
         <div className="relative text-center text-white max-w-4xl px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">{blog.title}</h1>
-          <p className="text-sm text-slate-200">
+          <h1
+            className="text-4xl md:text-5xl font-bold"
+            dangerouslySetInnerHTML={{ __html: blog.title }}
+          />
+          <p className="text-sm mt-4">
             <Link to="/" className="hover:underline">
               Home
             </Link>{" "}
-            › <Link to="/blogs" className="hover:underline">Blogs</Link> ›{" "}
-            <span className="text-primary-400">{blog.title}</span>
+            ›{" "}
+            <Link to="/blogs" className="hover:underline">
+              Blogs
+            </Link>
           </p>
         </div>
       </section>
 
+      {/* Content */}
       <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-3 gap-16">
-          <article className="lg:col-span-2">
-            <div className="mb-10 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-lg">
-              <div className="w-full">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveImage({ src: featuredImage, alt: blog.title || "Featured image" })
-                  }
-                  className="block w-full cursor-zoom-in"
-                  aria-label="View full image"
-                  title="View full image"
+        <div className="max-w-4xl mx-auto px-4">
+
+          {/* Meta */}
+          <div className="flex flex-wrap gap-6 text-sm text-slate-500 mb-6">
+            <span className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {blog.authorName}
+            </span>
+
+            {blog.createdAt && (
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {new Date(blog.createdAt).toDateString()}
+              </span>
+            )}
+
+            <span className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              {blog.comments.length} Comments
+            </span>
+          </div>
+
+          {/* Categories */}
+          {blog.categories.length > 0 && (
+            <div className="flex gap-3 mb-8 flex-wrap">
+              {blog.categories.map((cat) => (
+                <span
+                  key={cat}
+                  className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-xs"
                 >
-                  <img
-                    src={featuredImage}
-                    alt={blog.title}
-                    className="max-h-[560px] w-full object-contain object-center"
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-6 text-sm text-slate-500 mb-6">
-              <span className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary-500" />
-                {blog.authorName}
-              </span>
-
-              {blog.createdAt && (
-                <span className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary-500" />
-                  {new Date(blog.createdAt).toDateString()}
+                  {cat}
                 </span>
-              )}
-
-              <span className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-primary-500" />0 Comments
-              </span>
+              ))}
             </div>
+          )}
 
-            <h2 className="text-3xl font-bold text-slate-900 mb-8">{blog.title}</h2>
+          {/* Blog Content */}
+          <div
+  className="
+    max-w-3xl mx-auto text-slate-700 leading-relaxed
 
-            <div
-              className="
-    prose prose-slate max-w-none
-    prose-p:leading-7
-    prose-p:my-3
-    prose-h2:text-2xl
-    prose-h2:font-bold
-    prose-h2:mt-14
-    prose-h2:mb-6
-    prose-ul:my-6
-    prose-ul:pl-6
-    prose-li:my-2
-    prose-blockquote:my-8
-    prose-blockquote:border-l-4
-    prose-blockquote:border-primary-500
-    prose-blockquote:bg-slate-50
-    prose-blockquote:px-6
-    prose-blockquote:py-4
-    prose-blockquote:italic
+    [&_ul]:list-disc
+    [&_ul]:pl-6
+    [&_ul]:my-4
+
+    [&_ol]:list-decimal
+    [&_ol]:pl-6
+    [&_ol]:my-4
+
+    [&_li]:mb-2
   "
-              style={{ lineHeight: 1.8 }}
-            >
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={{
-                  div: ({ node, ...props }) => {
-                    const divProps = props as React.HTMLAttributes<HTMLDivElement> & {
-                      align?: "left" | "center" | "right";
-                    };
-                    const align = divProps.align;
-                    return (
-                      <div
-                        {...divProps}
-                        style={{
-                          ...(divProps.style || {}),
-                          ...(align ? { textAlign: align } : {}),
-                        }}
-                      />
-                    );
-                  },
-                  p: ({ node, ...props }) => {
-                    const pProps = props as React.HTMLAttributes<HTMLParagraphElement> & {
-                      align?: "left" | "center" | "right";
-                    };
-                    const align = pProps.align;
-                    return (
-                      <p
-                        {...pProps}
-                        style={{
-                          ...(pProps.style || {}),
-                          whiteSpace: "pre-wrap",
-                          ...(align ? { textAlign: align } : {}),
-                        }}
-                      />
-                    );
-                  },
-                  span: ({ node, ...props }) => {
-                    const spanProps = props as React.HTMLAttributes<HTMLSpanElement>;
-                    return (
-                      <span
-                        {...spanProps}
-                        style={{
-                          ...(spanProps.style || {}),
-                          verticalAlign: "baseline",
-                          ...(spanProps.style?.fontSize ? { lineHeight: 1.5 } : {}),
-                        }}
-                      />
-                    );
-                  },
-                  img: ({ node, ...props }) => {
-                    const imgProps = props as React.ImgHTMLAttributes<HTMLImageElement>;
-                    if (!imgProps.src) return null;
-                    return (
-                      <figure className="my-8 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-                        <div className="w-full">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveImage({
-                                src: imgProps.src || "",
-                                alt: imgProps.alt || "Blog section image",
-                              })
-                            }
-                            className="block w-full cursor-zoom-in"
-                            aria-label="View full image"
-                            title="View full image"
-                          >
-                            <img
-                              {...imgProps}
-                              alt={imgProps.alt || "Blog section image"}
-                              className="max-h-[560px] w-full object-contain object-center"
-                              loading="lazy"
-                            />
-                          </button>
-                        </div>
-                      </figure>
-                    );
-                  },
-                  ul: ({ node, ...props }) => (
-                    <ul className="list-disc list-inside pl-0 my-6 space-y-2" {...props} />
-                  ),
-                  ol: ({ node, ...props }) => (
-                    <ol className="list-decimal list-inside pl-0 my-6 space-y-2" {...props} />
-                  ),
-                  hr: ({ node, ...props }) => (
-                    <hr {...props} className="my-8 border-0 border-t border-slate-300" />
-                  ),
-                }}
-              >
-                {normalizedMarkdownContent}
-              </ReactMarkdown>
+  dangerouslySetInnerHTML={{
+    __html: blog.content,
+  }}
+/>
+          {/* Tags */}
+          {blog.tags.length > 0 && (
+            <div className="flex flex-wrap gap-3 mt-12">
+              {blog.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-4 py-1.5 bg-slate-100 rounded-full text-sm border"
+                >
+                  #{tag}
+                </span>
+              ))}
             </div>
+          )}
 
-            {blog.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-3 mt-12">
-                {blog.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-4 py-1.5 bg-slate-100 rounded-full text-sm text-slate-700 border"
-                  >
-                    #{tag}
-                  </span>
+          {/* Comments */}
+          <div className="mt-16">
+            <h3 className="text-2xl font-bold mb-6">
+              Comments ({blog.comments.length})
+            </h3>
+
+            {blog.comments.length === 0 ? (
+              <p className="text-slate-500">No comments yet.</p>
+            ) : (
+              <div className="space-y-6">
+                {blog.comments.map((comment) => (
+                  <div key={comment.id} className="border-b pb-4">
+                    <div className="font-semibold">
+                      {comment.author}
+                    </div>
+                    <div
+                      className="text-slate-600 mt-2"
+                      dangerouslySetInnerHTML={{
+                        __html: comment.content,
+                      }}
+                    />
+                    <div className="text-xs text-slate-400 mt-1">
+                      {new Date(comment.date).toDateString()}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
-          </article>
-
-          <aside className="space-y-12">
-            <div className="bg-slate-50 p-6 rounded-xl border">
-              <h3 className="font-bold text-lg mb-4">Search</h3>
-              <input
-                className="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-primary-500"
-                placeholder="Search blogs..."
-              />
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-xl border">
-              <h3 className="font-bold text-lg mb-4">Recent Posts</h3>
-
-              {recentBlogs.length === 0 ? (
-                <p className="text-slate-500 text-sm">No recent posts.</p>
-              ) : (
-                <ul className="space-y-4">
-                  {recentBlogs.map((b) => (
-                    <li key={b.id}>
-                      <Link
-                        to={`/blogs/${b.slug}`}
-                        className="block font-medium text-slate-700 hover:text-primary-600 transition"
-                      >
-                        {b.title}
-                      </Link>
-
-                      {b.createdAt && (
-                        <div className="text-xs text-slate-400 mt-1">
-                          {new Date(b.createdAt).toDateString()}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-xl border">
-              <h3 className="font-bold text-lg mb-4">Comments</h3>
-              <p className="text-slate-500 text-sm">No comments yet.</p>
-            </div>
-          </aside>
+          </div>
         </div>
       </section>
 
+      {/* Image Modal */}
       {activeImage && (
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center"
           onClick={() => setActiveImage(null)}
         >
-          <button
-            type="button"
-            onClick={() => setActiveImage(null)}
-            className="absolute right-4 top-4 rounded-md border border-white/30 bg-black/40 px-3 py-1.5 text-sm text-white hover:bg-black/60"
-          >
-            Close
-          </button>
-          <div
+          <img
+            src={activeImage}
             className="max-h-[90vh] max-w-[95vw]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <img
-              src={activeImage.src}
-              alt={activeImage.alt}
-              className="max-h-[88vh] max-w-[95vw] rounded-lg object-contain"
-            />
-          </div>
+          />
         </div>
       )}
     </>

@@ -1,0 +1,23 @@
+.wp-block-list {
+  padding-left: 1.25rem;
+}
+
+.wp-block-heading {
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+
+.wp-block-separator {
+  margin-top: 3.5rem;
+  margin-bottom: 3.5rem;
+}
+
+.wp-block-list {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+}
+
+.wp-block-list li {
+  display: list-item !important;
+  margin-bottom: 0.5rem;
+}
