@@ -142,12 +142,12 @@ const buildContentFromSections = (sections: ContentSection[]) =>
     .map((section) => {
       const parts: string[] = [];
       const image = String(section.image ?? "").trim();
-      const text = String(section.text ?? "").trim();
+      const rawText = String(section.text ?? "");
       if (image) {
         parts.push(`![Content image](${image})`);
       }
-      if (text) {
-        parts.push(text);
+      if (rawText.trim()) {
+        parts.push(rawText);
       }
       return parts.join("\n\n");
     })
@@ -1122,16 +1122,16 @@ const buildStructuredBlogPayload = async (resolvedSlug: string) => {
     const featuredImage = (previewImage || draft.featuredImage || DEFAULT_BLOG_IMAGE).trim();
     const bodyMarkdown =
       editorMode === "sections"
-        ? buildContentFromSections(contentSections).trim()
-        : draft.content.trim();
+        ? buildContentFromSections(contentSections)
+        : draft.content;
     const sections = contentSections
       .map((section) => ({
         imageUrl: String(section.image ?? "").trim(),
         altText: String(section.altText ?? "").trim(),
         heading: String(section.heading ?? "").trim(),
-        text: String(section.text ?? "").trim(),
+        text: String(section.text ?? ""),
       }))
-      .filter((section) => section.imageUrl || section.text);
+      .filter((section) => section.imageUrl || section.text.trim());
     const normalizedMetaKeywords =
       (draft.metaKeywords ?? "").trim() || tags.join(", ");
 
@@ -1162,16 +1162,16 @@ ogImage: draft.ogImage?.trim() || featuredImage,
     const status = draft.status || "Published";
     const bodyMarkdown =
       editorMode === "sections"
-        ? buildContentFromSections(contentSections).trim()
-        : draft.content.trim();
+        ? buildContentFromSections(contentSections)
+        : draft.content;
     const sections = contentSections
       .map((section) => ({
         imageUrl: String(section.image ?? "").trim(),
         altText: String(section.altText ?? "").trim(),
         heading: String(section.heading ?? "").trim(),
-        text: String(section.text ?? "").trim(),
+        text: String(section.text ?? ""),
       }))
-      .filter((section) => section.imageUrl || section.text);
+      .filter((section) => section.imageUrl || section.text.trim());
     const featuredImageFromSectionZero = sections[0]?.imageUrl?.trim() || "";
     const featuredImage =
       (previewImage || draft.featuredImage || "").trim() ||

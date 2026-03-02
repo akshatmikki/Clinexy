@@ -830,7 +830,7 @@ export const Home: React.FC = () => {
             ) : blogs.length === 0 ? (
               <p className="text-center text-slate-500">No blogs found.</p>
             ) : (
-              <div className="flex snap-x snap-mandatory gap-6">
+              <div className="flex snap-x snap-mandatory justify-center gap-6">
                 {blogs.slice(0, 3).map((blog) => (
                   <div
                     key={blog.id}
@@ -937,3 +937,4 @@ export const Home: React.FC = () => {
     </div>
   );
 };
+
