@@ -180,7 +180,7 @@ export const BlogDetails = () => {
     const fetchBlog = async () => {
       try {
         const res = await fetch(
-          `https://clinexy.in/wp-json/wp/v2/posts?slug=5-nft-projects-you-should-learn-about`
+          `https://clinexy.in/wp-json/wp/v2/posts?slug=${slug}&_embed`
         );
 
         if (!res.ok) throw new Error("Blog not found");
