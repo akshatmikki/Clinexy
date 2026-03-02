@@ -185,33 +185,49 @@ const Blogs = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch(
-          "https://admin.urest.in:8089/api/blogs/GetAllBlogs"
-        );
-        const data = await res.json();
+useEffect(() => {
+  const load = async () => {
+    try {
+      const res = await fetch(
+        "https://clinexy.in/wp-json/wp/v2/posts?_embed&per_page=100"
+      );
 
-        const list =
-          data?.blogs || data?.content || data?.data || data || [];
+      if (!res.ok) throw new Error("Failed to fetch blogs");
 
-        setBlogs(
-          list
-            .map(normalize)
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt || "").getTime() -
-                new Date(a.createdAt || "").getTime()
-            )
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await res.json();
 
-    load();
-  }, []);
+      const formatted: Blog[] = data.map((post: any) => ({
+        id: String(post.id),
+        slug: post.slug,
+        title: post.title?.rendered,
+        featuredImage:
+          post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+          DEFAULT_IMAGE,
+        authorName:
+          post._embedded?.author?.[0]?.name || "Clinexy Team",
+        tags:
+          post._embedded?.["wp:term"]?.[1]?.map((tag: any) => tag.name) || [],
+        excerpt: post.excerpt?.rendered,
+        content: post.content?.rendered,
+        createdAt: post.date,
+      }));
+
+      setBlogs(
+        formatted.sort(
+          (a, b) =>
+            new Date(b.createdAt || "").getTime() -
+            new Date(a.createdAt || "").getTime()
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, []);
 
   if (loading)
     return (
