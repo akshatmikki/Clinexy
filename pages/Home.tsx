@@ -151,156 +151,43 @@ export const Home: React.FC = () => {
 
 
   useEffect(() => {
-    const fetchBlogs = async () => {
+    const fetchTopBlogs = async () => {
       try {
-        const res = await fetch("https://admin.urest.in:8089/api/blogs/GetAllBlogs");
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const rawBlogs: unknown[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.blogs)
-            ? data.blogs
-            : Array.isArray(data?.content)
-              ? data.content
-              : Array.isArray(data?.data)
-                ? data.data
-                : [];
-
-        const normalizedBlogs: Blog[] = rawBlogs.map((item, index) => {
-          const blog = (item ?? {}) as {
-            id?: unknown;
-            Id?: unknown;
-            title?: unknown;
-            Title?: unknown;
-            slug?: unknown;
-            Slug?: unknown;
-            content?: unknown;
-            Content?: unknown;
-            body?: unknown;
-            Body?: unknown;
-            excerpt?: unknown;
-            Excerpt?: unknown;
-            summary?: unknown;
-            Summary?: unknown;
-            description?: unknown;
-            Description?: unknown;
-            featuredImage?: unknown;
-            FeaturedImage?: unknown;
-            authorName?: unknown;
-            AuthorName?: unknown;
-            tags?: unknown;
-            Tags?: unknown;
-            views?: unknown;
-            Views?: unknown;
-            likes?: unknown;
-            Likes?: unknown;
-            createdAt?: unknown;
-            CreatedAt?: unknown;
-          };
-
-          const title =
-            (typeof blog.title === "string" && blog.title) ||
-            (typeof blog.Title === "string" && blog.Title) ||
-            "Untitled";
-          const slug =
-            (typeof blog.slug === "string" && blog.slug) ||
-            (typeof blog.Slug === "string" && blog.Slug) ||
-            title.toLowerCase().replace(/\s+/g, "-");
-
-          return {
-            id: String(blog.id ?? blog.Id ?? index),
-            title,
-            slug,
-            content: blog.content ?? blog.Content ?? blog.body ?? blog.Body ?? undefined,
-            excerpt:
-              (typeof blog.excerpt === "string" && blog.excerpt) ||
-              (typeof blog.Excerpt === "string" && blog.Excerpt) ||
-              (typeof blog.summary === "string" && blog.summary) ||
-              (typeof blog.Summary === "string" && blog.Summary) ||
-              (typeof blog.description === "string" && blog.description) ||
-              (typeof blog.Description === "string" && blog.Description) ||
-              undefined,
-            featuredImage:
-              (typeof blog.featuredImage === "string" && blog.featuredImage) ||
-              (typeof blog.FeaturedImage === "string" && blog.FeaturedImage) ||
-              "",
-            authorName:
-              (typeof blog.authorName === "string" && blog.authorName) ||
-              (typeof blog.AuthorName === "string" && blog.AuthorName) ||
-              "Clinexy Team",
-            tags: Array.isArray(blog.tags)
-              ? blog.tags.map(String)
-              : Array.isArray(blog.Tags)
-                ? blog.Tags.map(String)
-                : [],
-            views: Number(blog.views ?? blog.Views ?? 0),
-            likes: Number(blog.likes ?? blog.Likes ?? 0),
-            createdAt:
-              (typeof blog.createdAt === "string" && blog.createdAt) ||
-              (typeof blog.CreatedAt === "string" && blog.CreatedAt) ||
-              undefined,
-          };
-        });
-
-        const hydratedBlogs = await Promise.all(
-          normalizedBlogs.map(async (blog) => {
-            if ((blog.content || blog.excerpt) || !blog.slug) {
-              return blog;
-            }
-
-            try {
-              const detailRes = await fetch(
-                `https://admin.urest.in:8089/api/blogs/${encodeURIComponent(blog.slug)}`
-              );
-              if (!detailRes.ok) return blog;
-
-              const detail = await detailRes.json();
-              const detailBlog = detail as {
-                content?: unknown;
-                Content?: unknown;
-                body?: unknown;
-                Body?: unknown;
-                excerpt?: unknown;
-                Excerpt?: unknown;
-                summary?: unknown;
-                Summary?: unknown;
-                description?: unknown;
-                Description?: unknown;
-              };
-
-              return {
-                ...blog,
-                content:
-                  detailBlog.content ??
-                  detailBlog.Content ??
-                  detailBlog.body ??
-                  detailBlog.Body ??
-                  blog.content,
-                excerpt:
-                  (typeof detailBlog.excerpt === "string" && detailBlog.excerpt) ||
-                  (typeof detailBlog.Excerpt === "string" && detailBlog.Excerpt) ||
-                  (typeof detailBlog.summary === "string" && detailBlog.summary) ||
-                  (typeof detailBlog.Summary === "string" && detailBlog.Summary) ||
-                  (typeof detailBlog.description === "string" && detailBlog.description) ||
-                  (typeof detailBlog.Description === "string" && detailBlog.Description) ||
-                  blog.excerpt,
-              };
-            } catch {
-              return blog;
-            }
-          })
+        const res = await fetch(
+          "https://clinexy.in/wp-json/wp/v2/posts?_embed&per_page=3&orderby=date&order=desc"
         );
 
-        setBlogs(hydratedBlogs);
+        if (!res.ok) throw new Error("Failed to fetch blogs");
+
+        const data = await res.json();
+
+        const formatted: Blog[] = data.map((post: any) => ({
+          id: String(post.id),
+          title: post.title?.rendered,
+          slug: post.slug,
+          content: post.content?.rendered,
+          excerpt: post.excerpt?.rendered,
+          featuredImage:
+            post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+            "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80",
+          authorName:
+            post._embedded?.author?.[0]?.name || "Clinexy Team",
+          tags:
+            post._embedded?.["wp:term"]?.[1]?.map((tag: any) => tag.name) || [],
+          views: 0,
+          likes: 0,
+          createdAt: post.date,
+        }));
+
+        setBlogs(formatted);
       } catch (err) {
-        console.error("Failed to fetch blogs");
+        console.error("Failed to fetch blogs", err);
       } finally {
         setLoadingBlogs(false);
       }
     };
 
-    fetchBlogs();
+    fetchTopBlogs();
   }, []);
 
   const getExcerpt = (content: unknown, length = 140) => {
