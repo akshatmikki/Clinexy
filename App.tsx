@@ -175,13 +175,14 @@ const RouteMeta = () => {
 };
 
 const App: React.FC = () => {
+  const hideLayout = location.pathname === "/calculator-iframe";
   return (
     <Router>
       <ScrollToTop />
       <ScrollToHash />
       <RouteMeta />
       <div className="font-sans text-slate-900 bg-white">
-        <Header />
+        {!hideLayout && <Header />}
         <main>
           <Routes>
             {/* Explicit Home Route */}
@@ -250,7 +251,7 @@ const App: React.FC = () => {
             })}
           </Routes>
         </main>
-        <Footer />
+         {!hideLayout && <Footer />}
       </div>
     </Router>
   );
