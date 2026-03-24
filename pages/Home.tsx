@@ -304,7 +304,7 @@ export const Home: React.FC = () => {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
+  const CLINEXY_YEARLY_COST = 11988;
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
@@ -537,7 +537,9 @@ export const Home: React.FC = () => {
                 </div>
                 <div className="bg-secondary-600 rounded-2xl p-6 text-center shadow-lg transform scale-105">
                   <div className="text-sm text-secondary-100 uppercase tracking-wider font-semibold mb-1">Clinexy Cost / Year</div>
-                  <div className="text-3xl font-bold text-white">₹11,988</div>
+                  <div className="text-3xl font-bold text-white">
+                    ₹{CLINEXY_YEARLY_COST.toLocaleString()}
+                  </div>
                   <p className="text-xs text-secondary-100 mt-2">
                     Clinexy pays for itself by saving just <span className="font-bold underline">one missed appointment</span> a month.
                   </p>
