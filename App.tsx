@@ -14,6 +14,7 @@ import { FeaturesDoctorWebsite } from './pages/FeaturesDoctorWebsite';
 import { FeaturesReviewsReputation } from './pages/FeaturesReviewsReputation';
 import { PricingSoloDoctors } from './pages/PricingSoloDoctors';
 import { CompareMocDoc } from './pages/CompareMocDoc';
+import LostRevenueCalculator from './pages/LostRevenueCalculator';
 import { ComparePracto } from './pages/ComparePracto';
 import { CompareSimplePractice } from './pages/CompareSimplePractice';
 import { CompareCliniko } from './pages/CompareCliniko';
@@ -23,7 +24,6 @@ import { BlogDetails } from './pages/BlogDetails';
 import Blogs from "./pages/Blogs";
 import AdminBlogs from "./pages/AdminBlogs";
 import AdminLogin from "./pages/AdminLogin";
-import IframeEmbed from './pages/Iframe';
 
 const ADMIN_AUTH_KEY = "clinexy_admin_auth";
 
@@ -186,7 +186,7 @@ const App: React.FC = () => {
           <Routes>
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
-            <Route path="/iframe" element={<IframeEmbed />} />
+            <Route path="/calculator-iframe" element ={<LostRevenueCalculator />}
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />
