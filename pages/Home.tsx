@@ -440,10 +440,10 @@ export const Home: React.FC = () => {
             {features.map((feature, index) => (
               <div key={index} className={`flex flex-col lg:flex-row gap-12 items-start ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}>
                 <div className="flex-1 space-y-6">
-                  <div className="inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-sm font-semibold">
+                  {/* <div className="inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-sm font-semibold">
                     <feature.icon className="h-4 w-4" />
                     <span>Feature {index + 1}</span>
-                  </div>
+                  </div> */}
                   <h3 className="text-3xl font-bold text-slate-900">{feature.title}</h3>
                   <ul className="space-y-4">
                     {feature.points.map((point, i) => (
