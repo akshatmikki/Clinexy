@@ -11,6 +11,7 @@ const LostRevenueCalculator: React.FC = () => {
   const calcLostWeekly = calcFee * calcAppts * (calcNoShow / 100);
   const calcLostYearly = calcLostWeekly * 52;
     const CLINEXY_YEARLY_COST = 11988;
+    const savings = calcLostYearly - CLINEXY_YEARLY_COST;
 
   return (
     <section className="py-12 bg-slate-900 text-white min-h-screen flex items-center">
@@ -111,7 +112,7 @@ const LostRevenueCalculator: React.FC = () => {
                   Clinexy Cost / Year
                 </div>
                 <div className="text-2xl font-bold text-white">
-  ₹{CLINEXY_YEARLY_COST.toLocaleString()}
+  ₹{savings.toLocaleString()}
 </div>
                 <p className="text-xs text-secondary-100 mt-2">
                   Pays for itself by saving just{" "}
