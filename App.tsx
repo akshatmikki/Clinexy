@@ -186,7 +186,7 @@ const App: React.FC = () => {
           <Routes>
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
-            <Route path="/calculator-iframe" element ={<LostRevenueCalculator />}
+            <Route path="/calculator-iframe" element ={<LostRevenueCalculator />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />
