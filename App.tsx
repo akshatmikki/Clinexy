@@ -14,7 +14,7 @@ import { FeaturesDoctorWebsite } from './pages/FeaturesDoctorWebsite';
 import { FeaturesReviewsReputation } from './pages/FeaturesReviewsReputation';
 import { PricingSoloDoctors } from './pages/PricingSoloDoctors';
 import { CompareMocDoc } from './pages/CompareMocDoc';
-import LostRevenueCalculator from './pages/LostRevenueCalculator';
+import CalculatorPage from './pages/Calculatorpage';
 import { ComparePracto } from './pages/ComparePracto';
 import { CompareSimplePractice } from './pages/CompareSimplePractice';
 import { CompareCliniko } from './pages/CompareCliniko';
@@ -186,7 +186,7 @@ const App: React.FC = () => {
           <Routes>
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
-            <Route path="/calculator-iframe" element ={<LostRevenueCalculator />} />
+            <Route path="/calculator-iframe" element ={<CalculatorPage />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />
