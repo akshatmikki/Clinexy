@@ -815,7 +815,7 @@ export const Home: React.FC = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
               <a href="https://rishabhkumar.clinexy.com/signup">
-                <Button size="lg" className="bg-white text-primary-800 hover:bg-slate-100 w-full sm:w-auto px-8">
+                <Button variant="light" size="lg" className="w-full sm:w-auto px-8">
                   Start Your Free Trial
                 </Button>
               </a>
