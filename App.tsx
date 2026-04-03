@@ -24,6 +24,7 @@ import { BlogDetails } from './pages/BlogDetails';
 import Blogs from "./pages/Blogs";
 import AdminBlogs from "./pages/AdminBlogs";
 import AdminLogin from "./pages/AdminLogin";
+import PractoVsClinexyCalculator from './pages/ClinexyPractoCalculator';
 
 const ADMIN_AUTH_KEY = "clinexy_admin_auth";
 
@@ -175,7 +176,10 @@ const RouteMeta = () => {
 };
 
 const App: React.FC = () => {
-  const hideLayout = location.pathname === "/calculator-iframe";
+  const hideLayout =
+    location.pathname === "/calculator-iframe" ||
+    location.pathname === "/calculator-only";
+
   return (
     <Router>
       <ScrollToTop />
@@ -188,6 +192,7 @@ const App: React.FC = () => {
             {/* Explicit Home Route */}
             <Route path="/" element={<Home />} />
             <Route path="/calculator-iframe" element ={<CalculatorPage />} />
+            <Route path="/calculator-only" element={<PractoVsClinexyCalculator />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />

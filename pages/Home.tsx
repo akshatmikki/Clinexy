@@ -309,7 +309,7 @@ export const Home: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 bg-gradient-to-b from-primary-50 via-white to-white overflow-hidden">
+      <section className="pt-32 pb-20 px-4 bg-gradient-to-b from-primary-50 via-white to-white overflow-x-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 animate-fade-in-up">

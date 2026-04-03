@@ -22,15 +22,14 @@ export const Header: React.FC = () => {
   }, [location]);
 
   return (
-    <header 
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/50 py-2' 
-          : 'bg-white/80 backdrop-blur-sm border-b border-transparent py-4'
-      }`}
+    <header
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled
+        ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-200/50 py-9'
+        : 'bg-white/80 backdrop-blur-sm border-b border-transparent py-6'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14">
+        <div className="flex justify-between items-center h-10">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group relative z-50">
             <div className="bg-gradient-to-tr from-primary-600 to-primary-500 text-white p-2 rounded-xl group-hover:scale-105 transition-transform duration-300 shadow-lg shadow-primary-500/20">
@@ -43,7 +42,7 @@ export const Header: React.FC = () => {
           <nav className="hidden lg:flex items-center gap-2">
             {NAV_ITEMS.map((item) => (
               item.path ? (
-                <Link 
+                <Link
                   key={item.label}
                   to={item.path}
                   className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-slate-50 rounded-full transition-all"
@@ -51,31 +50,30 @@ export const Header: React.FC = () => {
                   {item.label}
                 </Link>
               ) : (
-                <div 
-                  key={item.label} 
+                <div
+                  key={item.label}
                   className="relative group"
                   onMouseEnter={() => setActiveDropdown(item.label)}
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <button 
-                    className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-all ${
-                      activeDropdown === item.label 
-                        ? 'text-primary-600 bg-primary-50' 
-                        : 'text-slate-600 hover:text-primary-600 hover:bg-slate-50'
-                    }`}
+                  <button
+                    className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-all ${activeDropdown === item.label
+                      ? 'text-primary-600 bg-primary-50'
+                      : 'text-slate-600 hover:text-primary-600 hover:bg-slate-50'
+                      }`}
                   >
                     {item.label}
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${activeDropdown === item.label ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Mega Menu Dropdown */}
-                  <div 
+                  <div
                     className={`absolute top-full left-1/2 -translate-x-1/2 w-[600px] pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out transform -translate-y-2 group-hover:translate-y-0 z-40`}
                   >
                     <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 p-6 overflow-hidden relative">
                       {/* Decorative background blob */}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-primary-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-                      
+
                       <div className="grid grid-cols-2 gap-8 relative z-10">
                         {item.sections && Object.entries(item.sections).map(([sectionName, items]) => (
                           <div key={sectionName}>
@@ -122,7 +120,7 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="lg:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
@@ -138,8 +136,8 @@ export const Header: React.FC = () => {
             {NAV_ITEMS.map((item) => (
               <div key={item.label} className="border-b border-slate-100 last:border-0 pb-4 last:pb-0">
                 {item.path ? (
-                  <Link 
-                    to={item.path} 
+                  <Link
+                    to={item.path}
                     className="block font-bold text-lg text-slate-900 hover:text-primary-600 py-1"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
