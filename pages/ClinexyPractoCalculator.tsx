@@ -11,34 +11,35 @@ const PractoVsClinexyCalculator: React.FC = () => {
   const yearlySavings = (practoCost - clinexyCost) * 12;
 
   return (
-    <section className="bg-slate-900 text-white min-h-screen flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-4xl">
+    <section className="bg-slate-900 text-white h-screen flex items-center justify-center px-3 overflow-hidden">
+      
+      <div className="w-full max-w-4xl h-full flex flex-col justify-center">
 
         {/* Header */}
-        <div className="text-center mb-8 md:mb-10">
-          <div className="inline-flex items-center justify-center p-3 bg-indigo-500/20 rounded-xl mb-4 text-indigo-400">
-            <Calculator className="h-6 w-6 md:h-7 md:w-7" />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center p-2 bg-indigo-500/20 rounded-lg mb-2 text-indigo-400">
+            <Calculator className="h-5 w-5" />
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-bold mb-2 leading-tight">
+          <h2 className="text-xl md:text-2xl font-bold">
             Commission vs Subscription Calculator
           </h2>
 
-          <p className="text-slate-400 text-sm md:text-base px-2">
+          <p className="text-slate-400 text-xs md:text-sm">
             See how much you could save by switching to a flat monthly fee.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-800 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-2xl border border-slate-700">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+        <div className="bg-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl border border-slate-700 overflow-hidden">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
             {/* Inputs */}
-            <div className="space-y-6 md:space-y-8">
+            <div className="space-y-4">
 
-              {/* Appointments */}
               <div>
-                <label className="block text-sm text-slate-300 mb-2">
+                <label className="text-sm text-slate-300">
                   Monthly Appointments:{" "}
                   <span className="text-indigo-400 font-bold">
                     {appointments}
@@ -55,9 +56,8 @@ const PractoVsClinexyCalculator: React.FC = () => {
                 />
               </div>
 
-              {/* Fee */}
               <div>
-                <label className="block text-sm text-slate-300 mb-2">
+                <label className="text-sm text-slate-300">
                   Avg Fee (₹):{" "}
                   <span className="text-green-400 font-bold">₹{fee}</span>
                 </label>
@@ -66,13 +66,12 @@ const PractoVsClinexyCalculator: React.FC = () => {
                   type="number"
                   value={fee}
                   onChange={(e) => setFee(Number(e.target.value))}
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 md:py-3"
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2"
                 />
               </div>
 
-              {/* Commission */}
               <div>
-                <label className="block text-sm text-slate-300 mb-2">
+                <label className="text-sm text-slate-300">
                   Marketplace Commission:{" "}
                   <span className="text-red-400 font-bold">
                     {commission}%
@@ -91,42 +90,39 @@ const PractoVsClinexyCalculator: React.FC = () => {
             </div>
 
             {/* Output */}
-            <div className="flex flex-col justify-center gap-4 md:gap-6 mt-2 md:mt-0">
+            <div className="flex flex-col justify-center gap-3">
 
-              <div className="flex justify-between items-center p-3 md:p-4 bg-slate-700 rounded-xl border border-slate-600">
-                <span className="text-slate-400 text-sm">
+              <div className="flex justify-between p-3 bg-slate-700 rounded-lg">
+                <span className="text-slate-400 text-xs">
                   Practo Cost/Mo
                 </span>
-                <span className="text-red-400 font-bold text-base md:text-lg">
+                <span className="text-red-400 font-bold text-sm">
                   ₹{Math.round(practoCost).toLocaleString()}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center p-3 md:p-4 bg-slate-700 rounded-xl border border-slate-600">
-                <span className="text-slate-400 text-sm">
+              <div className="flex justify-between p-3 bg-slate-700 rounded-lg">
+                <span className="text-slate-400 text-xs">
                   Clinexy Cost/Mo
                 </span>
-                <span className="font-bold text-base md:text-lg">
+                <span className="font-bold text-sm">
                   ₹{clinexyCost}
                 </span>
               </div>
 
-              <div className="bg-indigo-600 p-4 md:p-6 rounded-xl text-center shadow-lg">
-                <div className="text-xs md:text-sm uppercase text-indigo-200 font-semibold mb-1">
+              <div className="bg-indigo-600 p-4 rounded-lg text-center">
+                <div className="text-xs uppercase text-indigo-200">
                   Yearly Savings
                 </div>
 
-                <div className="text-2xl md:text-4xl font-bold">
+                <div className="text-xl md:text-2xl font-bold">
                   ₹{Math.max(0, Math.round(yearlySavings)).toLocaleString()}
                 </div>
-
-                <p className="text-xs text-indigo-200 mt-2 hidden md:block">
-                  More patients = More income for you.
-                </p>
               </div>
 
             </div>
           </div>
+
         </div>
 
       </div>
