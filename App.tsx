@@ -27,6 +27,7 @@ import AdminLogin from "./pages/AdminLogin";
 import PractoVsClinexyCalculator from './pages/ClinexyPractoCalculator';
 import ValueCostCalculator from './pages/ValueAndCostCalculator';
 import ClinikoCalculator from './pages/ClinikoCalculator';
+import MocDocCalculator from './pages/MocDocCalculator';
 
 const ADMIN_AUTH_KEY = "clinexy_admin_auth";
 
@@ -182,6 +183,7 @@ const App: React.FC = () => {
     location.pathname === "/calculator-iframe" ||
     location.pathname === "/value-cost-calculator" ||
     location.pathname === "/cliniko-calculator" ||
+    location.pathname === "/mocdoc-calculator" ||
     location.pathname === "/calculator-only";
 
   return (
@@ -199,6 +201,7 @@ const App: React.FC = () => {
             <Route path="/calculator-only" element={<PractoVsClinexyCalculator />} />
             <Route path="/value-cost-calculator" element={<ValueCostCalculator />} />
             <Route path="/cliniko-calculator" element={<ClinikoCalculator />} />
+            <Route path="/mocdoc-calculator" element={<MocDocCalculator />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />
