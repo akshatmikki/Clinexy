@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import {Calculator} from "lucide-react";
 
 const RevenueCalculator = () => {
   const [consultFee, setConsultFee] = useState(500);
@@ -16,6 +17,9 @@ const RevenueCalculator = () => {
         
         {/* Header */}
         <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center p-3 bg-red-500/20 rounded-xl mb-4 text-red-400">
+                           <Calculator className="h-8 w-8" />
+                        </div>
           <h2 className="text-3xl font-bold mb-4">
             Lost Revenue Calculator
           </h2>
