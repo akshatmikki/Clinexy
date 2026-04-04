@@ -20,13 +20,13 @@ const SavingsCalculator: React.FC = () => {
   const symbol = currency === "INR" ? "₹" : "$";
 
   return (
-    <section className="min-h-screen w-full bg-slate-900 text-white flex items-center justify-center py-10 px-4">
+    <section className="w-full bg-slate-900 text-white py-8 px-3">
       
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 bg-blue-500/20 rounded-xl mb-4 text-blue-400">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center p-3 bg-blue-500/20 rounded-xl mb-3 text-blue-400">
             <Calculator className="h-6 w-6 md:h-8 md:w-8" />
           </div>
 
@@ -40,9 +40,9 @@ const SavingsCalculator: React.FC = () => {
         </div>
 
         {/* Card */}
-        <div className="bg-slate-800 rounded-2xl p-4 md:p-8 border border-slate-700">
+        <div className="bg-slate-800 rounded-2xl p-4 md:p-6 border border-slate-700">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* LEFT */}
             <div className="space-y-5">
@@ -137,9 +137,9 @@ const SavingsCalculator: React.FC = () => {
             </div>
 
             {/* RIGHT */}
-            <div className="flex flex-col justify-center gap-4">
+            <div className="space-y-4">
 
-              <div className="bg-slate-700/50 p-4 md:p-6 rounded-xl border border-slate-600">
+              <div className="bg-slate-700/50 p-4 md:p-5 rounded-xl border border-slate-600">
                 <p className="text-xs md:text-sm text-slate-400">
                   Platform Cost
                 </p>
@@ -148,7 +148,7 @@ const SavingsCalculator: React.FC = () => {
                 </h2>
               </div>
 
-              <div className="bg-slate-700/50 p-4 md:p-6 rounded-xl border border-slate-600">
+              <div className="bg-slate-700/50 p-4 md:p-5 rounded-xl border border-slate-600">
                 <p className="text-xs md:text-sm text-slate-400">
                   Clinexy Cost
                 </p>
@@ -157,7 +157,7 @@ const SavingsCalculator: React.FC = () => {
                 </h2>
               </div>
 
-              <div className="bg-blue-600 p-5 md:p-6 rounded-xl">
+              <div className="bg-blue-600 p-5 rounded-xl">
                 <p className="text-xs text-blue-200 font-bold uppercase">
                   Monthly Savings
                 </p>
