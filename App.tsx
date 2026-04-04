@@ -30,6 +30,8 @@ import ClinikoCalculator from './pages/ClinikoCalculator';
 import MocDocCalculator from './pages/MocDocCalculator';
 import SoloDoctorCalculator from './pages/SoloDoctorCalculator';
 import PersonalWebsiteCalculator from './pages/PersonalWebsiteCalculator';
+import AppointmentRevenueCalculator from './pages/Appointmentrevenuecalculator';
+import LostRevenueCalculator from './pages/LostRevenueCalculator';
 
 const ADMIN_AUTH_KEY = "clinexy_admin_auth";
 
@@ -188,6 +190,8 @@ const App: React.FC = () => {
     location.pathname === "/mocdoc-calculator" ||
     location.pathname === "/solo-doctor-calculator" ||
     location.pathname === "/personal-website-calculator" ||
+    location.pathname === "/appointment-revenue-calculator" ||
+    location.pathname === "/lost-revenue-calculator" ||
     location.pathname === "/calculator-only";
 
   return (
@@ -208,6 +212,8 @@ const App: React.FC = () => {
             <Route path="/mocdoc-calculator" element={<MocDocCalculator />} />
             <Route path="/solo-doctor-calculator" element={<SoloDoctorCalculator />} />
             <Route path="/personal-website-calculator" element={<PersonalWebsiteCalculator />} />
+            <Route path="/appointment-revenue-calculator" element={<AppointmentRevenueCalculator />} />
+            <Route path="/lost-revenue-calculator" element={<LostRevenueCalculator />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetails />} />
             <Route path="/admin" element={<AdminLogin />} />
