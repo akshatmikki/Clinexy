@@ -66,7 +66,7 @@ const CalculatorSection: React.FC = () => {
 
                 <div className="relative mt-2">
                   <span className="absolute left-3 top-2 text-slate-400">
-                    ₹
+                    $
                   </span>
 
                   <input
@@ -110,7 +110,7 @@ const CalculatorSection: React.FC = () => {
                   Commission Saved Per Month
                 </p>
                 <h2 className="text-2xl font-bold text-white">
-                  ₹{Math.round(monthly).toLocaleString()}
+                  ${Math.round(monthly).toLocaleString()}
                 </h2>
               </div>
 
@@ -120,7 +120,7 @@ const CalculatorSection: React.FC = () => {
                 </p>
 
                 <h1 className="text-4xl font-bold text-green-300">
-                  ₹{Math.round(yearly).toLocaleString()}
+                  ${Math.round(yearly).toLocaleString()}
                 </h1>
               </div>
 
