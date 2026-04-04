@@ -20,38 +20,39 @@ const SavingsCalculator: React.FC = () => {
   const symbol = currency === "INR" ? "₹" : "$";
 
   return (
-    <section className="w-full bg-slate-900 text-white py-8 px-3">
-      
-      <div className="w-full max-w-4xl mx-auto">
+    // ✅ FULL HEIGHT + FULL COLOR FIX
+    <section className="w-full min-h-screen bg-[#0B1B34] text-white flex items-center justify-center px-4">
+
+      <div className="w-full max-w-5xl">
 
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center p-3 bg-blue-500/20 rounded-xl mb-3 text-blue-400">
-            <Calculator className="h-6 w-6 md:h-8 md:w-8" />
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center p-3 bg-blue-500/20 rounded-xl mb-4 text-blue-400">
+            <Calculator className="h-8 w-8" />
           </div>
 
-          <h2 className="text-xl md:text-3xl font-bold">
+          <h2 className="text-2xl md:text-4xl font-bold">
             Commission Savings Calculator
           </h2>
 
-          <p className="text-slate-400 text-sm md:text-base">
-            See how much you save by using Clinexy vs. commission-based platforms.
+          <p className="text-slate-400 text-sm md:text-base mt-2">
+            See how much you save by using Clinexy vs commission-based platforms.
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-slate-800 rounded-2xl p-4 md:p-6 border border-slate-700">
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-[#1E2A3B] rounded-2xl p-4 md:p-8 border border-slate-700 shadow-xl">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
 
             {/* LEFT */}
-            <div className="space-y-5">
+            <div className="space-y-6">
 
               {/* Currency */}
               <div className="flex bg-slate-700 rounded-lg p-1 w-fit">
                 <button
                   onClick={() => setCurrency("INR")}
-                  className={`px-3 py-1 text-xs md:text-sm rounded ${
+                  className={`px-4 py-1 text-sm rounded-md ${
                     currency === "INR"
                       ? "bg-blue-600 text-white"
                       : "text-slate-300"
@@ -62,7 +63,7 @@ const SavingsCalculator: React.FC = () => {
 
                 <button
                   onClick={() => setCurrency("USD")}
-                  className={`px-3 py-1 text-xs md:text-sm rounded ${
+                  className={`px-4 py-1 text-sm rounded-md ${
                     currency === "USD"
                       ? "bg-blue-600 text-white"
                       : "text-slate-300"
@@ -74,8 +75,8 @@ const SavingsCalculator: React.FC = () => {
 
               {/* Appointments */}
               <div>
-                <label className="text-xs md:text-sm text-slate-400">
-                  Monthly Appointments
+                <label className="text-sm text-slate-400">
+                  Monthly Appointments (Online)
                 </label>
 
                 <input
@@ -84,18 +85,18 @@ const SavingsCalculator: React.FC = () => {
                   max="200"
                   value={appointments}
                   onChange={(e) => setAppointments(Number(e.target.value))}
-                  className="w-full mt-2 accent-blue-500"
+                  className="w-full mt-2 accent-purple-500"
                 />
 
-                <div className="text-right text-blue-400 font-bold text-sm">
+                <div className="text-right text-purple-400 font-bold">
                   {appointments}
                 </div>
               </div>
 
               {/* Fee */}
               <div>
-                <label className="text-xs md:text-sm text-slate-400">
-                  Avg Fee
+                <label className="text-sm text-slate-400">
+                  Avg Fee per Consultation
                 </label>
 
                 <div className="relative mt-2">
@@ -107,18 +108,18 @@ const SavingsCalculator: React.FC = () => {
                     type="number"
                     value={fee}
                     onChange={(e) => setFee(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg py-2 pl-8 pr-3 text-sm"
+                    className="w-full bg-[#0F172A] border border-slate-600 rounded-lg py-2 pl-8 pr-3"
                   />
                 </div>
               </div>
 
               {/* Commission */}
               <div>
-                <label className="text-xs md:text-sm text-slate-400">
-                  Commission
+                <label className="text-sm text-slate-400">
+                  Platform Commission
                 </label>
 
-                <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-4 mt-2">
                   <input
                     type="range"
                     min="0"
@@ -128,7 +129,7 @@ const SavingsCalculator: React.FC = () => {
                     className="w-full accent-red-500"
                   />
 
-                  <span className="text-red-400 font-bold text-sm">
+                  <span className="text-red-400 font-bold">
                     {commission}%
                   </span>
                 </div>
@@ -137,37 +138,37 @@ const SavingsCalculator: React.FC = () => {
             </div>
 
             {/* RIGHT */}
-            <div className="space-y-4">
+            <div className="flex flex-col justify-center gap-4">
 
-              <div className="bg-slate-700/50 p-4 md:p-5 rounded-xl border border-slate-600">
-                <p className="text-xs md:text-sm text-slate-400">
-                  Platform Cost
+              <div className="bg-slate-700/50 p-6 rounded-xl border border-slate-600">
+                <p className="text-sm text-slate-400">
+                  Platform Cost per Month
                 </p>
-                <h2 className="text-lg md:text-2xl font-bold text-red-400">
+                <h2 className="text-2xl font-bold text-red-400">
                   {symbol}{Math.round(platformCost).toLocaleString()}
                 </h2>
               </div>
 
-              <div className="bg-slate-700/50 p-4 md:p-5 rounded-xl border border-slate-600">
-                <p className="text-xs md:text-sm text-slate-400">
-                  Clinexy Cost
+              <div className="bg-slate-700/50 p-6 rounded-xl border border-slate-600">
+                <p className="text-sm text-slate-400">
+                  Clinexy Cost per Month
                 </p>
-                <h2 className="text-lg md:text-2xl font-bold">
+                <h2 className="text-2xl font-bold">
                   {symbol}{clinexyCost}
                 </h2>
               </div>
 
-              <div className="bg-blue-600 p-5 rounded-xl">
-                <p className="text-xs text-blue-200 font-bold uppercase">
-                  Monthly Savings
+              <div className="bg-blue-600 p-6 rounded-xl shadow-lg">
+                <p className="text-sm uppercase text-blue-200 font-bold">
+                  Your Monthly Savings
                 </p>
 
-                <h1 className="text-2xl md:text-4xl font-bold">
+                <h1 className="text-4xl font-bold">
                   {symbol}{Math.max(0, Math.round(monthlySavings)).toLocaleString()}
                 </h1>
 
-                <p className="text-xs text-blue-200 mt-1">
-                  Save {symbol}{Math.max(0, Math.round(yearlySavings)).toLocaleString()} / year
+                <p className="text-xs text-blue-200 mt-2">
+                  Save {symbol}{Math.max(0, Math.round(yearlySavings)).toLocaleString()} per year
                 </p>
               </div>
 
