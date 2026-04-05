@@ -33,6 +33,7 @@ import PersonalWebsiteCalculator from './pages/PersonalWebsiteCalculator';
 import AppointmentRevenueCalculator from './pages/Appointmentrevenuecalculator';
 import LostRevenueCalculator from './pages/LostRevenueCalculator';
 import FeaturePatientCalculator from './pages/FeaturePatientCalculator';
+import TeleconsultationCalculator from './pages/TeleconsultationCalculator';
 
 const ADMIN_AUTH_KEY = "clinexy_admin_auth";
 
@@ -194,6 +195,7 @@ const App: React.FC = () => {
     location.pathname === "/appointment-revenue-calculator" ||
     location.pathname === "/lost-revenue-calculator" ||
     location.pathname === "/feature-patient-calculator" ||
+    location.pathname === "/teleconsultation-calculator" ||
     location.pathname === "/calculator-only";
 
   return (
@@ -216,6 +218,7 @@ const App: React.FC = () => {
             <Route path="/personal-website-calculator" element={<PersonalWebsiteCalculator />} />
             <Route path="/appointment-revenue-calculator" element={<AppointmentRevenueCalculator />} />
             <Route path="/lost-revenue-calculator" element={<LostRevenueCalculator />} />
+            <Route path="/teleconsultation-calculator" element={<TeleconsultationCalculator />} />
             <Route path="/feature-patient-calculator" element={<FeaturePatientCalculator />} />
 
             <Route path="/blogs" element={<Blogs />} />
